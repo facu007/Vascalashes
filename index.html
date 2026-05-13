@@ -20,10 +20,11 @@
         <img class="brand-mark" src="vasca-avatar.jpg" alt="Logo de Vasca">
         <span>Vasca</span>
       </a>
-      <nav class="topbar-nav">
-        <a class="topbar-nav-link" href="#servicios">Servicios</a>
-        <a class="topbar-nav-link" href="#comunidad">Comunidad</a>
-        <a class="topbar-nav-link" href="#testimonios">Opiniones</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menú" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+      <nav class="topbar-nav" id="topbar-nav">
+        <a class="topbar-nav-link" href="#servicios" onclick="this.parentElement.classList.remove('open')">Servicios</a>
+        <a class="topbar-nav-link" href="#comunidad" onclick="this.parentElement.classList.remove('open')">Comunidad</a>
+        <a class="topbar-nav-link" href="#testimonios" onclick="this.parentElement.classList.remove('open')">Opiniones</a>
         <a class="topbar-link" id="auth-link" href="login.html">Iniciar sesión</a>
       </nav>
     </div>
