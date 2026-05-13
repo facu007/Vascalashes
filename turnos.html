@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vasca — Pedir turno</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="turnos.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="index.html">
+        <img class="brand-mark" src="vasca-avatar.jpg" alt="Vasca">
+        <span>Vasca</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <a class="topbar-back" href="index.html">← Sitio</a>
+        <button onclick="logoutClient()" class="topbar-back" style="border:none;background:none;cursor:pointer;font:inherit;color:inherit;">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="booking-hero">
+      <h1>Reservá tu turno</h1>
+      <p>Elegí servicio, profesional, fecha y horario. Tu turno queda confirmado al instante.</p>
+    </div>
+
+    <!-- Step 1: Service -->
+    <section class="step" id="step-service">
+      <div class="step-header">
+        <span class="step-num">1</span>
+        <h2>Elegí el servicio</h2>
+      </div>
+      <div class="services-selector" id="services-list"></div>
+    </section>
+
+    <!-- Step 2: Professional -->
+    <section class="step hidden" id="step-professional">
+      <div class="step-header">
+        <span class="step-num">2</span>
+        <h2>Elegí la profesional</h2>
+      </div>
+      <div class="professionals-selector" id="professionals-list"></div>
+    </section>
+
+    <!-- Step 3: Date & Time -->
+    <section class="step hidden" id="step-datetime">
+      <div class="step-header">
+        <span class="step-num">3</span>
+        <h2>Elegí fecha y hora</h2>
+      </div>
+      <div class="datetime-grid">
+        <div class="date-picker-wrap">
+          <label>Fecha</label>
+          <input type="date" id="book-date" class="date-input">
+        </div>
+        <div class="slots-wrap">
+          <label>Horarios disponibles</label>
+          <div class="time-slots" id="time-slots">
+            <p class="hint">Elegí una fecha para ver horarios</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Your info -->
+    <section class="step hidden" id="step-info">
+      <div class="step-header">
+        <span class="step-num">4</span>
+        <h2>Tus datos</h2>
+      </div>
+      <div class="info-form">
+        <div class="form-row">
+          <div class="form-group"><label>Nombre completo *</label><input type="text" id="book-name" required></div>
+          <div class="form-group"><label>Teléfono *</label><input type="tel" id="book-phone" required placeholder="11 1234-5678"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Instagram (opcional)</label><input type="text" id="book-ig" placeholder="@"></div>
+          <div class="form-group"><label>Email (opcional)</label><input type="email" id="book-email"></div>
+        </div>
+        <div class="form-group"><label>Notas (opcional)</label><textarea id="book-notes" rows="2" placeholder="Algo que quieras contarnos..."></textarea></div>
+      </div>
+    </section>
+
+    <!-- Summary & Confirm -->
+    <section class="step hidden" id="step-confirm">
+      <div class="summary-card">
+        <h2>Tu turno</h2>
+        <div class="summary-details" id="summary-details"></div>
+        <button class="btn-confirm" id="btn-confirm" onclick="confirmBooking()">Confirmar turno</button>
+        <div class="form-status" id="booking-status"></div>
+      </div>
+    </section>
+
+    <!-- Success -->
+    <section class="step hidden" id="step-success">
+      <div class="success-card">
+        <div class="success-icon">✓</div>
+        <h2>¡Turno confirmado!</h2>
+        <p id="success-msg"></p>
+        <a href="index.html" class="btn-home">Volver al inicio</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="turnos.js"></script>
+</body>
+</html>

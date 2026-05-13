@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vasca Admin — Turnos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="vasca-avatar.jpg" alt="Vasca" class="sidebar-avatar">
+      <span>Vasca Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-view="dashboard" id="nav-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" data-view="calendar" id="nav-calendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+        Calendario
+      </button>
+      <button class="nav-btn" data-view="new-appointment" id="nav-new">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        Nuevo Turno
+      </button>
+      <button class="nav-btn" data-view="clients" id="nav-clients">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+        Clientas
+      </button>
+    </nav>
+    <a href="index.html" class="sidebar-back">← Volver al sitio</a>
+    <button class="sidebar-back" onclick="logoutAdmin()" style="border:none;background:none;cursor:pointer;font:inherit;width:100%;text-align:left;">Cerrar sesión</button>
+  </aside>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <header class="main-header">
+      <button class="menu-toggle" id="menu-toggle">☰</button>
+      <h1 id="page-title">Dashboard</h1>
+      <div class="header-date" id="header-date"></div>
+    </header>
+
+    <!-- DASHBOARD VIEW -->
+    <section class="view active" id="view-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-number" id="stat-today">0</div><div class="stat-label">Turnos hoy</div></div>
+        <div class="stat-card"><div class="stat-number" id="stat-week">0</div><div class="stat-label">Esta semana</div></div>
+        <div class="stat-card"><div class="stat-number" id="stat-pending">0</div><div class="stat-label">Pendientes</div></div>
+        <div class="stat-card"><div class="stat-number" id="stat-clients">0</div><div class="stat-label">Clientas</div></div>
+      </div>
+      <div class="panel">
+        <h2 class="panel-title">Turnos de hoy</h2>
+        <div id="today-appointments" class="appointments-list"><p class="empty-msg">Cargando...</p></div>
+      </div>
+      <div class="panel" style="margin-top:24px;">
+        <div class="panel-header">
+          <h2 class="panel-title">📲 Recordatorios — Turnos de mañana</h2>
+          <button class="action-btn" id="btn-send-all" onclick="vasca.sendAllReminders()" style="white-space:nowrap;">Enviar todos</button>
+        </div>
+        <div id="tomorrow-reminders" class="appointments-list"><p class="empty-msg">Cargando...</p></div>
+      </div>
+    </section>
+
+    <!-- CALENDAR VIEW -->
+    <section class="view" id="view-calendar">
+      <div class="calendar-controls">
+        <button class="cal-btn" id="cal-prev">←</button>
+        <h2 id="cal-month-label"></h2>
+        <button class="cal-btn" id="cal-next">→</button>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div class="panel" id="day-detail-panel" style="display:none">
+        <h2 class="panel-title" id="day-detail-title"></h2>
+        <div id="day-appointments" class="appointments-list"></div>
+      </div>
+    </section>
+
+    <!-- NEW APPOINTMENT VIEW -->
+    <section class="view" id="view-new-appointment">
+      <div class="form-panel">
+        <h2 class="panel-title">Nuevo turno</h2>
+        <form id="appointment-form" autocomplete="off">
+          <div class="form-row">
+            <div class="form-group"><label>Nombre completo</label><input type="text" id="f-name" required></div>
+            <div class="form-group"><label>Teléfono</label><input type="tel" id="f-phone" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Instagram (opcional)</label><input type="text" id="f-ig" placeholder="@"></div>
+            <div class="form-group"><label>Email (opcional)</label><input type="email" id="f-email"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Profesional</label><select id="f-professional" required><option value="">Elegir...</option></select></div>
+            <div class="form-group"><label>Servicio</label><select id="f-service" required><option value="">Elegir...</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Fecha</label><input type="date" id="f-date" required></div>
+            <div class="form-group"><label>Hora</label><select id="f-time" required><option value="">Elegir fecha primero</option></select></div>
+          </div>
+          <div class="form-group"><label>Notas (opcional)</label><textarea id="f-notes" rows="2"></textarea></div>
+          <button type="submit" class="btn-submit" id="btn-submit">Reservar turno</button>
+          <div id="form-status" class="form-status"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- CLIENTS VIEW -->
+    <section class="view" id="view-clients">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Clientas</h2>
+          <input type="search" id="client-search" placeholder="Buscar por nombre o teléfono..." class="search-input">
+        </div>
+        <div id="clients-list" class="clients-grid"><p class="empty-msg">Cargando...</p></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL MODIFICAR TURNO -->
+  <div class="modal-overlay" id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;align-items:center;justify-content:center;">
+    <div class="form-panel" style="max-width:480px;width:90%;margin:auto;position:relative;">
+      <button onclick="vasca.closeModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;">✕</button>
+      <h2 class="panel-title">Modificar turno</h2>
+      <div class="form-group"><label>Fecha</label><input type="date" id="edit-date"></div>
+      <div class="form-group"><label>Hora</label><input type="time" id="edit-time"></div>
+      <div id="edit-info" style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;"></div>
+      <button class="btn-submit" id="btn-edit-save" onclick="vasca.saveEdit()">Guardar cambios</button>
+      <div class="form-status" id="edit-status"></div>
+    </div>
+  </div>
+
+  <!-- TOAST WHATSAPP -->
+  <div id="wa-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:300;background:#25D366;color:#fff;padding:14px 24px;border-radius:14px;font-weight:600;font-size:0.95rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);display:none;align-items:center;gap:12px;max-width:90%;animation:slideUp 0.3s ease;">
+    <span id="wa-toast-text">Turno actualizado</span>
+    <a id="wa-toast-link" href="#" target="_blank" rel="noopener" style="background:#fff;color:#25D366;padding:8px 18px;border-radius:8px;text-decoration:none;font-weight:700;white-space:nowrap;">📲 Enviar WhatsApp</a>
+    <button onclick="document.getElementById('wa-toast').style.display='none'" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;margin-left:4px;">✕</button>
+  </div>
+  <style>
+    @keyframes slideUp { from { opacity:0; transform:translate(-50%,20px); } to { opacity:1; transform:translate(-50%,0); } }
+  </style>
+
+  <script src="admin.js"></script>
+</body>
+</html>
