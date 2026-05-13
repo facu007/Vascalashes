@@ -112,6 +112,12 @@
   let tomorrowAppts = [];
 
   async function loadDashboard() {
+    // Skeleton loading
+    const statIds = ["stat-today", "stat-week", "stat-pending", "stat-clients"];
+    statIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = "—"; });
+    const todayList = document.getElementById("today-appointments");
+    if (todayList) todayList.innerHTML = '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+
     const todayStr = today();
     const tmrw = new Date();
     tmrw.setDate(tmrw.getDate() + 1);

@@ -26,8 +26,12 @@
 
   <main class="shell">
     <div class="booking-hero">
-      <h1>Reservá tu turno</h1>
-      <p>Elegí servicio, profesional, fecha y horario. Tu turno queda confirmado al instante.</p>
+      <h1>Tus turnos</h1>
+      <p>Reserva un turno nuevo o consulta tus turnos activos.</p>
+      <div class="tabs" style="display:flex;gap:8px;justify-content:center;margin-top:20px;">
+        <button class="tab-btn active" id="tab-new" onclick="switchTab('new')">Reservar</button>
+        <button class="tab-btn" id="tab-mine" onclick="switchTab('mine')">Mis turnos</button>
+      </div>
     </div>
 
     <!-- Step 1: Service -->
@@ -103,8 +107,13 @@
         <div class="success-icon">✓</div>
         <h2>¡Turno confirmado!</h2>
         <p id="success-msg"></p>
+        <a id="cal-link" href="#" target="_blank" rel="noopener" class="btn-home" style="margin-bottom:12px;background:var(--accent);">📅 Agregar al calendario</a>
         <a href="index.html" class="btn-home">Volver al inicio</a>
       </div>
+    </section>
+    <!-- My Appointments -->
+    <section id="view-my-appointments" style="display:none;">
+      <div class="my-appts-list" id="my-appts-list"><p class="hint">Cargando tus turnos...</p></div>
     </section>
   </main>
 

@@ -2,6 +2,11 @@
    VASCA LASHES — Premium Animations & Interactions
    ═══════════════════════════════════════════════════════════ */
 
+// PWA Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
 (function () {
   "use strict";
 

@@ -1,0 +1,13 @@
+{
+  "name": "Vasca | Lashes & Eyebrows",
+  "short_name": "Vasca",
+  "description": "Reservá tu turno online con Vasca Lashes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f1ea",
+  "theme_color": "#221914",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -52,6 +52,10 @@
 
   // ─── INIT ──────────────────────────────────────
   async function init() {
+    // Skeleton while loading
+    document.getElementById("services-list").innerHTML =
+      '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+
     [professionals, services, prices] = await Promise.all([
       api("professionals", "select=*&is_active=eq.true&order=sort_order"),
       api("services", "select=*&is_active=eq.true&order=sort_order"),
@@ -210,11 +214,19 @@
       const email = document.getElementById("book-email").value.trim();
       const notes = document.getElementById("book-notes").value.trim();
 
-      // Get or create client
+      // ── Duplicate check ──
       let clients = await api("clients", `select=*&phone=eq.${encodeURIComponent(phone)}`);
       let clientId;
       if (clients.length) {
         clientId = clients[0].id;
+        // Check for existing appointment same day
+        const existing = await api("appointments", `select=id&client_id=eq.${clientId}&appointment_date=eq.${selected.date}&status=neq.cancelled`);
+        if (existing.length) {
+          status.textContent = "Ya tenés un turno reservado para esa fecha.";
+          status.className = "form-status error";
+          btn.disabled = false;
+          return;
+        }
         await api("clients", `id=eq.${clientId}`, { method: "PATCH", body: JSON.stringify({ full_name: name, instagram: ig || null, email: email || null }) });
       } else {
         const nc = await api("clients", "", { method: "POST", body: JSON.stringify({ full_name: name, phone, instagram: ig || null, email: email || null }) });
@@ -239,9 +251,15 @@
         })
       });
 
-      // Show success
+      // Show success + Google Calendar link
       const dateF = new Date(selected.date + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
       document.getElementById("success-msg").textContent = `${selected.service.name} con ${selected.professional.name} · ${dateF} a las ${selected.time}`;
+
+      // Google Calendar link
+      const calStart = selected.date.replace(/-/g, "") + "T" + selected.time.replace(":", "") + "00";
+      const calEnd = selected.date.replace(/-/g, "") + "T" + endTime.replace(":", "") + "00";
+      const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selected.service.name + " - Vasca Lashes")}&dates=${calStart}/${calEnd}&location=${encodeURIComponent("Alvarado 968")}&details=${encodeURIComponent("Turno con " + selected.professional.name)}`;
+      document.getElementById("cal-link").href = calUrl;
 
       hide("step-service"); hide("step-professional"); hide("step-datetime"); hide("step-info"); hide("step-confirm");
       show("step-success");
@@ -252,8 +270,88 @@
     }
   }
 
+  // ─── TAB SWITCHING ─────────────────────────────
+  window.switchTab = function (tab) {
+    const steps = ["step-service", "step-professional", "step-datetime", "step-info", "step-confirm", "step-success"];
+    const myView = document.getElementById("view-my-appointments");
+
+    document.getElementById("tab-new").classList.toggle("active", tab === "new");
+    document.getElementById("tab-mine").classList.toggle("active", tab === "mine");
+
+    if (tab === "new") {
+      myView.style.display = "none";
+      document.getElementById("step-service").classList.remove("hidden");
+    } else {
+      steps.forEach(s => hide(s));
+      myView.style.display = "block";
+      loadMyAppointments();
+    }
+  };
+
+  // ─── MY APPOINTMENTS ──────────────────────────
+  async function loadMyAppointments() {
+    const container = document.getElementById("my-appts-list");
+    container.innerHTML = '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+
+    try {
+      // Get user email from token
+      const payload = JSON.parse(atob(userToken.split(".")[1]));
+      const userEmail = payload.email;
+      if (!userEmail) { container.innerHTML = '<p class="hint">No se pudo identificar tu cuenta</p>'; return; }
+
+      // Find client by email
+      const clientData = await api("clients", `select=id&email=eq.${encodeURIComponent(userEmail)}`);
+      if (!clientData.length) {
+        container.innerHTML = '<p class="hint">No tenés turnos registrados todavía. ¡Reservá tu primer turno!</p>';
+        return;
+      }
+
+      const appts = await api("appointments",
+        `select=*,services(name),professionals(name)&client_id=eq.${clientData[0].id}&order=appointment_date.desc,start_time.desc&limit=20`
+      );
+
+      if (!appts.length) {
+        container.innerHTML = '<p class="hint">No tenés turnos todavía. ¡Reservá tu primer turno!</p>';
+        return;
+      }
+
+      const statusLabel = { pending: "Pendiente", confirmed: "Confirmado", completed: "Completado", cancelled: "Cancelado" };
+
+      container.innerHTML = appts.map(a => {
+        const dateF = new Date(a.appointment_date + "T12:00:00").toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" });
+        const time = a.start_time.substring(0, 5);
+        const canCancel = ["pending", "confirmed"].includes(a.status);
+        return `<div class="my-appt-card">
+          <div class="my-appt-info">
+            <h4>${a.services?.name || "Servicio"}</h4>
+            <p>${dateF} · ${time} hs · ${a.professionals?.name || ""}</p>
+          </div>
+          <div class="my-appt-actions">
+            <span class="my-appt-status ${a.status}">${statusLabel[a.status] || a.status}</span>
+            ${canCancel ? `<button class="my-appt-cancel" onclick="vasca.cancelMyAppt('${a.id}')">Cancelar</button>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+    } catch (err) {
+      container.innerHTML = `<p class="hint">Error al cargar turnos: ${err.message}</p>`;
+    }
+  }
+
+  async function cancelMyAppt(id) {
+    if (!confirm("¿Segura que querés cancelar este turno?")) return;
+    try {
+      await api("appointments", `id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
+      });
+      loadMyAppointments();
+    } catch (err) {
+      alert("Error al cancelar: " + err.message);
+    }
+  }
+
   // ─── EXPOSE ───────────────────────────────────
-  window.vasca = { selectService, selectProfessional, selectTime };
+  window.vasca = { selectService, selectProfessional, selectTime, cancelMyAppt };
   window.confirmBooking = confirmBooking;
 
   document.addEventListener("DOMContentLoaded", init);
