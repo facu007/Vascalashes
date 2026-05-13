@@ -221,12 +221,145 @@ body {
 }
 
 /* ─── RESPONSIVE ──────────────────── */
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main-content { margin-left: 0; padding: 0 16px 32px; }
-  .menu-toggle { display: block; }
+
+/* Tablet */
+@media (max-width: 1024px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .form-row { grid-template-columns: 1fr; }
-  .appt-card { grid-template-columns: 1fr; gap: 8px; }
+  .clients-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  /* Sidebar: overlay mode */
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 8px 0 40px rgba(0,0,0,0.5);
+  }
+
+  /* Overlay backdrop when sidebar is open */
+  .sidebar.open::after {
+    content: '';
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: calc(100vw - 280px);
+    background: rgba(0,0,0,0.4);
+    z-index: -1;
+  }
+
+  /* Main content: full width */
+  .main-content {
+    margin-left: 0;
+    padding: 0 14px 32px;
+    width: 100%;
+  }
+
+  .menu-toggle { display: block; }
+
+  /* Header */
+  .main-header {
+    padding: 16px 0;
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+  .main-header h1 { font-size: 1.3rem; }
+  .header-date { font-size: 0.78rem; }
+
+  /* Stats: 2 columns compact */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-card { padding: 16px; }
+  .stat-number { font-size: 2rem; }
+  .stat-label { font-size: 0.75rem; }
+
+  /* Panels */
+  .panel { padding: 18px; margin-bottom: 16px; border-radius: 14px; }
+  .panel-title { font-size: 1.2rem; margin-bottom: 14px; }
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .panel-header .action-btn { align-self: stretch; text-align: center; }
+
+  /* Appointment cards: stack vertically */
+  .appt-card {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px;
+  }
+  .appt-time {
+    font-size: 0.88rem;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .appt-info h4 { font-size: 0.9rem; }
+  .appt-info p { font-size: 0.78rem; }
+  .appt-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 8px;
+  }
+  .appt-status { font-size: 0.68rem; }
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 0.76rem;
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+  }
+
+  /* Calendar: compact */
+  .calendar-controls { gap: 10px; margin-bottom: 16px; }
+  .calendar-controls h2 { font-size: 1.2rem; }
+  .cal-btn { width: 36px; height: 36px; font-size: 1rem; }
+  .calendar-grid { gap: 4px; }
+  .cal-header { font-size: 0.65rem; padding: 6px 2px; }
+  .cal-day { border-radius: 8px; }
+  .cal-day .day-num { font-size: 0.78rem; }
+  .cal-day .day-count { font-size: 0.58rem; padding: 1px 4px; }
+
+  /* Form */
+  .form-panel {
+    padding: 20px;
+    border-radius: 14px;
+  }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .form-group { margin-bottom: 14px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 11px 12px;
+    font-size: 0.88rem;
+  }
+  .btn-submit { padding: 13px; font-size: 0.88rem; }
+
+  /* Clients */
+  .search-input { min-width: 0; width: 100%; }
+  .clients-grid { grid-template-columns: 1fr; gap: 10px; }
+  .client-card { padding: 16px; }
+  .client-card h4 { font-size: 0.92rem; }
+
+  /* Modal overlay */
+  .modal-overlay .form-panel {
+    margin: 16px !important;
+    padding: 20px !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .main-content { padding: 0 10px 24px; }
+  .stat-card { padding: 14px; }
+  .stat-number { font-size: 1.6rem; }
+  .appt-actions { flex-direction: column; }
+  .action-btn { flex: unset; }
 }

@@ -524,11 +524,19 @@
   }
 
   // ─── WHATSAPP HELPER ───────────────────────────────────
-  function sendWhatsApp(phone, message) {
+  function sendWhatsApp(phone, message, label) {
     const clean = phone.replace(/\D/g, "");
     const num = clean.startsWith("54") ? clean : "54" + clean;
     const url = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    const toast = document.getElementById("wa-toast");
+    const toastText = document.getElementById("wa-toast-text");
+    const toastLink = document.getElementById("wa-toast-link");
+    toastText.textContent = label || "Notificar a la clienta";
+    toastLink.href = url;
+    toast.style.display = "flex";
+    // Auto-hide after 15s
+    clearTimeout(window._waToastTimer);
+    window._waToastTimer = setTimeout(() => { toast.style.display = "none"; }, 15000);
   }
 
   function fmtDateNice(d) {
@@ -582,7 +590,7 @@
       // Notificar por WhatsApp
       if (contactPhone) {
         const msg = `¡Hola ${contactName}! 💫 Te informamos que tu turno de *${contactSvc}* fue modificado.\n\n📅 Nueva fecha: *${fmtDateNice(newDate)}*\n🕐 Nuevo horario: *${newTime} hs*\n\nSi tenés alguna consulta no dudes en escribirnos. ¡Te esperamos! ✨\n\n— Vasca Lashes`;
-        sendWhatsApp(contactPhone, msg);
+        sendWhatsApp(contactPhone, msg, `✏️ Turno modificado — ${contactName}`);
       }
     } catch (err) {
       status.textContent = "Error: " + err.message;
@@ -602,7 +610,7 @@
       await updateStatus(id, "cancelled");
       if (phone) {
         const msg = `Hola ${clientName} 🙁 Lamentamos informarte que tu turno de *${svcName}* del *${fmtDateNice(date)}* a las *${formatTime(time)} hs* fue cancelado.\n\nPodés reservar un nuevo turno en nuestra web cuando quieras.\n\n— Vasca Lashes`;
-        sendWhatsApp(phone, msg);
+        sendWhatsApp(phone, msg, `❌ Turno cancelado — ${clientName}`);
       }
     } catch (err) {
       alert("Error al cancelar: " + err.message);
@@ -613,7 +621,7 @@
   function sendReminder(apptId, phone, clientName, svcName, date, time) {
     if (!phone) { alert("Esta clienta no tiene teléfono registrado"); return; }
     const msg = `¡Hola ${clientName}! 💫 Te recordamos que mañana tenés turno de *${svcName}*.\n\n🕐 Horario: *${formatTime(time)} hs*\n📍 Alvarado 968\n\nSi necesitás reprogramar avisanos con tiempo. ¡Te esperamos! ✨\n\n— Vasca Lashes`;
-    sendWhatsApp(phone, msg);
+    sendWhatsApp(phone, msg, `🔔 Recordatorio — ${clientName}`);
 
     // Marcar como enviado
     const sent = JSON.parse(localStorage.getItem("vasca_reminders_sent") || "{}");
