@@ -43,13 +43,6 @@ if ("serviceWorker" in navigator) {
       return;
     }
 
-    // Show wordmark only after fonts are ready to prevent layout shift
-    if (document.fonts) {
-      document.fonts.ready.then(() => loader.classList.add("fonts-ready"));
-    } else {
-      loader.classList.add("fonts-ready");
-    }
-
     if (!reducedMotion) {
       requestAnimationFrame(() => loader.classList.add("is-animating"));
     }

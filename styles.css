@@ -88,7 +88,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .page-loader-wordmark {
-  font-family: "Cormorant Garamond", serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(3.4rem, 12vw, 5.6rem);
   line-height: 0.9;
   letter-spacing: 0.18em;

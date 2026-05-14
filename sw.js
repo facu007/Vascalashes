@@ -1,5 +1,5 @@
-const CACHE_NAME = 'vasca-v1';
-const ASSETS = ['/', '/index.html', '/styles.css', '/main.js', '/favicon.svg', '/vasca-avatar.jpg'];
+const CACHE_NAME = 'vasca-v2';
+const ASSETS = ['/', '/index.html', '/styles.css', '/main.js', '/icon-192.png', '/vasca-avatar.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
