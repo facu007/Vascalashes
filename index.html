@@ -19,8 +19,28 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.json">
+  <script>
+    try {
+      if (sessionStorage.getItem("vasca-home-loader-seen") === "1") {
+        document.documentElement.classList.add("skip-loader");
+      }
+    } catch (_) {}
+  </script>
 </head>
 <body>
+  <div class="page-loader" id="page-loader" aria-hidden="true">
+    <div class="page-loader-shell">
+      <div class="page-loader-mark">
+        <img src="vasca-avatar.jpg" alt="Vasca">
+      </div>
+      <p class="page-loader-kicker">Lashes & Eyebrows · Alvarado 968</p>
+      <h1 class="page-loader-wordmark">VASCA</h1>
+      <p class="page-loader-copy">Preparando una experiencia premium pensada al detalle.</p>
+      <div class="page-loader-progress" aria-hidden="true">
+        <span data-loader-progress></span>
+      </div>
+    </div>
+  </div>
 
   <header class="topbar">
     <div class="shell topbar-inner">
@@ -39,13 +59,12 @@
   </header>
 
   <main id="inicio">
-    <!-- HERO -->
     <section class="hero">
       <div class="shell hero-grid">
         <div class="hero-copy">
           <div class="eyebrow">Lashes & Eyebrows | Alvarado 968</div>
           <h1>Una agenda online a la altura de la marca.</h1>
-          <p>Reservá en pocos pasos: elegí servicio, profesional, fecha y horario. Tu turno queda guardado y se envía recordatorio por correo.</p>
+          <p>Reservá en pocos pasos: elegí servicio, profesional, fecha y horario. Tu turno queda guardado y ahora también se confirma por correo.</p>
           <div class="actions">
             <a class="btn btn-primary" id="hero-cta" href="login.html">Pedir turno</a>
             <a class="btn btn-secondary" href="https://www.instagram.com/vasca.lashes/" target="_blank" rel="noreferrer">Ver servicios</a>
@@ -59,7 +78,6 @@
       </div>
     </section>
 
-    <!-- WATERMARK MARQUEE -->
     <section class="brand-watermark">
       <div class="watermark-container">
         <div class="watermark-track">
@@ -73,7 +91,6 @@
       </div>
     </section>
 
-    <!-- SERVICIOS -->
     <section id="servicios" class="premium-services">
       <div class="shell">
         <div class="section-header reveal">
@@ -124,7 +141,6 @@
       </div>
     </section>
 
-    <!-- NO HAY NOSOTROS SIN USTEDES -->
     <section id="comunidad" class="community-section">
       <div class="shell">
         <div class="community-header reveal">
@@ -132,7 +148,6 @@
           <p class="section-copy">Cada mirada que transformamos nos transforma a nosotras. Gracias por confiar, por volver, por ser parte de Vasca.</p>
         </div>
 
-        <!-- Before / After -->
         <div class="before-after-showcase reveal">
           <div class="ba-card">
             <img src="img/antes.jpg" alt="Antes del tratamiento" loading="lazy">
@@ -148,7 +163,6 @@
           </div>
         </div>
 
-        <!-- Photo Gallery -->
         <div class="community-gallery">
           <div class="gallery-item"><img src="img/foto1.jpg" alt="Clienta Vasca" loading="lazy"></div>
           <div class="gallery-item"><img src="img/foto2.jpg" alt="Resultado Vasca" loading="lazy"></div>
@@ -161,13 +175,11 @@
           <div class="gallery-item"><img src="img/foto9.jpg" alt="Resultado Vasca" loading="lazy"></div>
         </div>
 
-        <!-- Fotos del equipo (siempre lado a lado) -->
         <div class="team-duo">
           <div class="gallery-item"><img src="img/fotoconjunto1.jpg" alt="El equipo Vasca" loading="lazy"></div>
           <div class="gallery-item"><img src="img/fotoconjunto2.jpg" alt="El equipo Vasca" loading="lazy"></div>
         </div>
 
-        <!-- Videos -->
         <div class="community-videos">
           <div class="video-card"><video src="img/video.mp4" muted loop playsinline preload="none" loading="lazy"></video><div class="video-overlay"></div></div>
           <div class="video-card"><video src="img/video2.mp4" muted loop playsinline preload="none" loading="lazy"></video><div class="video-overlay"></div></div>
@@ -177,19 +189,17 @@
       </div>
     </section>
 
-    <!-- TESTIMONIOS -->
     <section id="testimonios" class="premium-testimonials">
       <div class="shell">
         <div class="section-header reveal">
           <h2 class="section-title">Experiencias reales</h2>
-          <p class="section-copy">Opiniones de clientas sobre los resultados y el ambiente en nuestro local.</p>
+          <p class="section-copy">Opiniones verificadas de clientas sobre los resultados y el ambiente en nuestro local.</p>
         </div>
         <div class="testimonials-grid" id="testimonials-grid"></div>
       </div>
     </section>
   </main>
 
-  <!-- WhatsApp flotante -->
   <a href="https://wa.me/5491100000000?text=Hola%20Vasca!%20Quiero%20consultar" target="_blank" rel="noopener" class="wa-float" aria-label="WhatsApp">
     <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.02L0 32l8.18-2.1A15.94 15.94 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.23 22.31c-.4-.2-2.35-1.16-2.71-1.29-.36-.13-.63-.2-.9.2-.26.4-1.02 1.29-1.25 1.55-.23.27-.46.3-.86.1-.4-.2-1.68-.62-3.2-1.97-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.17-.81.18-.18.4-.46.6-.7.2-.23.26-.4.4-.66.13-.27.07-.5-.03-.7-.1-.2-.9-2.15-1.22-2.95-.32-.77-.65-.67-.9-.68l-.76-.01c-.27 0-.7.1-1.06.5-.36.4-1.39 1.36-1.39 3.31s1.42 3.84 1.62 4.11c.2.27 2.8 4.27 6.79 5.99.95.41 1.69.66 2.27.84.95.3 1.82.26 2.5.16.76-.11 2.35-.96 2.68-1.89.33-.93.33-1.72.23-1.89-.1-.17-.36-.27-.76-.47z"/></svg>
   </a>
@@ -202,43 +212,5 @@
   </footer>
 
   <script src="main.js"></script>
-  <script>
-    // Generate testimonial stars via JS to avoid SVG repetition
-    (function(){
-      const testimonials = [
-        { text: '\u201CEl resultado fue justo lo que buscaba. Natural y prolijo.\u201D', author: 'Sofía M.' },
-        { text: '\u201CEl ambiente es súper tranquilo, te sentís cómoda desde que entrás.\u201D', author: 'Lucía R.' },
-        { text: '\u201CSe nota la técnica. Nada exagerado, todo bien hecho.\u201D', author: 'Martina G.' },
-        { text: '\u201CVolvería sin dudar. Atención y detalle en todo.\u201D', author: 'Agustina C.' },
-        { text: '\u201CMe encantó cómo quedó, pero también cómo me sentí durante todo el proceso.\u201D', author: 'Julieta P.' }
-      ];
-      const starSVG = '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
-      const grid = document.getElementById('testimonials-grid');
-      if (!grid) return;
-      grid.innerHTML = testimonials.map(t => `
-        <article class="testimonial-card">
-          <div class="stars">${starSVG.repeat(5)}</div>
-          <p class="testimonial-text">${t.text}</p>
-          <div class="testimonial-author">${t.author}</div>
-        </article>
-      `).join('');
-    })();
-  </script>
-  <script>
-    (function(){
-      const token = localStorage.getItem('vasca_token');
-      const role = localStorage.getItem('vasca_role');
-      const navLink = document.getElementById('auth-link');
-      const heroBtn = document.getElementById('hero-cta');
-      if (token && role === 'admin') {
-        navLink.href = 'admin.html';
-        navLink.textContent = 'Admin';
-      } else if (token && role === 'client') {
-        navLink.href = 'turnos.html';
-        navLink.textContent = 'Turnos';
-        heroBtn.href = 'turnos.html';
-      }
-    })();
-  </script>
 </body>
 </html>

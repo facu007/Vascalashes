@@ -23,13 +23,10 @@
     }
     .container { width: 100%; max-width: 420px; padding: 20px; animation: fadeIn 0.6s ease; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-
     .brand-header { text-align: center; margin-bottom: 36px; }
     .brand-header img { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--line); margin-bottom: 14px; }
     .brand-header h1 { font-family: "Cormorant Garamond", serif; font-size: 2.2rem; letter-spacing: -0.02em; }
     .brand-header p { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
-
-    /* Tabs */
     .tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--card); border-radius: 12px; padding: 4px; border: 1px solid var(--line); }
     .tab {
       flex: 1; padding: 12px; border: none; background: transparent; color: var(--muted);
@@ -37,8 +34,6 @@
       cursor: pointer; transition: all 0.3s;
     }
     .tab.active { background: var(--accent); color: var(--bg); }
-
-    /* Form */
     .form-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 28px; }
     .form-card.hidden { display: none; }
     .form-group { margin-bottom: 16px; }
@@ -77,7 +72,6 @@
       <button class="tab" onclick="switchTab('register')">Registrarse</button>
     </div>
 
-    <!-- LOGIN -->
     <div class="form-card" id="form-login">
       <form onsubmit="handleLogin(event)">
         <div class="form-group">
@@ -93,7 +87,6 @@
       </form>
     </div>
 
-    <!-- REGISTER -->
     <div class="form-card hidden" id="form-register">
       <form onsubmit="handleRegister(event)">
         <div class="form-group">
@@ -124,135 +117,239 @@
     const SB_URL = "https://mxoztaxlcciqrdejfpum.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14b3p0YXhsY2NpcXJkZWpmcHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTQ3NzksImV4cCI6MjA5NDE5MDc3OX0.bwE9e5P2UvqAC9VauZVk1q6j19mnDkAptXMOTEiKhJA";
 
-    // If already logged in, redirect based on role
-    (async function checkSession() {
-      const token = localStorage.getItem("vasca_token");
-      if (!token) return;
-
-      // Validate token is still valid
-      try {
-        const res = await fetch(`${SB_URL}/auth/v1/user`, {
-          headers: { "apikey": SB_KEY, "Authorization": `Bearer ${token}` }
-        });
-        if (!res.ok) {
-          // Token expired or invalid — clean up
-          localStorage.removeItem("vasca_token");
-          localStorage.removeItem("vasca_refresh");
-          localStorage.removeItem("vasca_user");
-          localStorage.removeItem("vasca_role");
-          return;
-        }
-        const role = await getUserRole(token);
-        if (role === "admin") window.location.href = "admin.html";
-        else if (role === "client") window.location.href = "turnos.html";
-      } catch {
-        // Network error — don't redirect, just stay on login
-        localStorage.removeItem("vasca_token");
-        localStorage.removeItem("vasca_role");
-      }
-    })();
-
     function switchTab(tab) {
-      document.querySelectorAll(".tab").forEach((t, i) => {
-        t.classList.toggle("active", (tab === "login" && i === 0) || (tab === "register" && i === 1));
+      document.querySelectorAll(".tab").forEach((button, index) => {
+        button.classList.toggle("active", (tab === "login" && index === 0) || (tab === "register" && index === 1));
       });
       document.getElementById("form-login").classList.toggle("hidden", tab !== "login");
       document.getElementById("form-register").classList.toggle("hidden", tab !== "register");
     }
 
+    function parseToken(token) {
+      try {
+        return JSON.parse(atob(token.split(".")[1]));
+      } catch {
+        return {};
+      }
+    }
+
+    async function fetchJson(url, init = {}) {
+      const response = await fetch(url, init);
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!response.ok) {
+        throw new Error(data?.error_description || data?.msg || data?.message || text || "Request failed");
+      }
+      return data;
+    }
+
     async function getUserRole(token) {
+      const payload = parseToken(token);
+      const userId = payload.sub;
+      if (!userId) return "client";
+
       try {
-        const uid = getUserId(token);
-        if (!uid) return "client";
-        const res = await fetch(`${SB_URL}/rest/v1/profiles?select=role&id=eq.${uid}`, {
-          headers: { "apikey": SB_KEY, "Authorization": `Bearer ${token}` }
+        const data = await fetchJson(`${SB_URL}/rest/v1/profiles?select=role&id=eq.${userId}&limit=1`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) return "client";
-        const data = await res.json();
         return data.length ? data[0].role : "client";
-      } catch { return "client"; }
+      } catch {
+        return "client";
+      }
     }
 
-    function getUserId(token) {
+    async function upsertProfile(token, profile) {
+      return fetchJson(`${SB_URL}/rest/v1/profiles?on_conflict=id`, {
+        method: "POST",
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
+        body: JSON.stringify(profile),
+      });
+    }
+
+    async function patchClient(token, clientId, payload) {
+      return fetchJson(`${SB_URL}/rest/v1/clients?id=eq.${clientId}`, {
+        method: "PATCH",
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    async function createClient(token, payload) {
+      return fetchJson(`${SB_URL}/rest/v1/clients`, {
+        method: "POST",
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    async function syncClientIdentity(token, user, seed = {}) {
+      const payload = parseToken(token);
+      const userId = user?.id || payload.sub;
+      const email = user?.email || payload.email || seed.email || "";
+      if (!userId) return;
+
+      const [profileRows, clientRows] = await Promise.all([
+        fetchJson(`${SB_URL}/rest/v1/profiles?select=id,full_name,phone,role&id=eq.${userId}&limit=1`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` },
+        }).catch(() => []),
+        fetchJson(`${SB_URL}/rest/v1/clients?select=*&auth_user_id=eq.${userId}&limit=1`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` },
+        }).catch(() => []),
+      ]);
+
+      const profile = profileRows[0] || null;
+      const fullName = seed.full_name || profile?.full_name || user?.user_metadata?.full_name || "";
+      const phone = seed.phone || profile?.phone || user?.user_metadata?.phone || "";
+
+      await upsertProfile(token, {
+        id: userId,
+        full_name: fullName,
+        phone: phone || null,
+        role: profile?.role || "client",
+      }).catch(() => null);
+
+      let client = clientRows[0] || null;
+      if (!client && email) {
+        const byEmail = await fetchJson(`${SB_URL}/rest/v1/clients?select=*&email=eq.${encodeURIComponent(email)}&order=created_at.asc&limit=1`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` },
+        }).catch(() => []);
+        client = byEmail[0] || null;
+      }
+
+      if (client) {
+        const patch = {};
+        if (client.auth_user_id !== userId) patch.auth_user_id = userId;
+        if (fullName && fullName !== client.full_name) patch.full_name = fullName;
+        if (phone && phone !== client.phone) patch.phone = phone;
+        if (email && email !== client.email) patch.email = email;
+        if (Object.keys(patch).length) {
+          const fallbackPatch = { ...patch };
+          delete fallbackPatch.auth_user_id;
+          try {
+            await patchClient(token, client.id, patch);
+          } catch {
+            if (Object.keys(fallbackPatch).length) {
+              await patchClient(token, client.id, fallbackPatch).catch(() => null);
+            }
+          }
+        }
+        return;
+      }
+
+      const newClient = {
+        full_name: fullName || "Clienta Vasca",
+        phone: phone || "Sin teléfono",
+        email: email || null,
+        auth_user_id: userId,
+      };
+
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return payload.sub;
-      } catch { return ""; }
+        await createClient(token, newClient);
+      } catch {
+        delete newClient.auth_user_id;
+        await createClient(token, newClient).catch(() => null);
+      }
     }
 
-    async function handleLogin(e) {
-      e.preventDefault();
-      const btn = document.getElementById("btn-login");
+    async function checkSession() {
+      const token = localStorage.getItem("vasca_token");
+      if (!token) return;
+
+      try {
+        const user = await fetchJson(`${SB_URL}/auth/v1/user`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` },
+        });
+
+        await syncClientIdentity(token, user).catch(() => null);
+        const role = await getUserRole(token);
+        localStorage.setItem("vasca_role", role);
+        if (role === "admin") window.location.href = "admin.html";
+        else window.location.href = "turnos.html";
+      } catch {
+        localStorage.removeItem("vasca_token");
+        localStorage.removeItem("vasca_refresh");
+        localStorage.removeItem("vasca_user");
+        localStorage.removeItem("vasca_role");
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const button = document.getElementById("btn-login");
       const status = document.getElementById("login-status");
-      btn.disabled = true;
+      button.disabled = true;
       status.textContent = "Verificando...";
       status.className = "status";
 
       try {
         const email = document.getElementById("login-email").value;
-        const pass = document.getElementById("login-pass").value;
+        const password = document.getElementById("login-pass").value;
 
-        const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+        const data = await fetchJson(`${SB_URL}/auth/v1/token?grant_type=password`, {
           method: "POST",
-          headers: { "apikey": SB_KEY, "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password: pass })
+          headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error_description || err.msg || "Credenciales incorrectas");
-        }
-
-        const data = await res.json();
         localStorage.setItem("vasca_token", data.access_token);
         localStorage.setItem("vasca_refresh", data.refresh_token);
         localStorage.setItem("vasca_user", JSON.stringify(data.user));
 
-        status.textContent = "✓ Bienvenida";
-        status.className = "status success";
-
-        // Check role and redirect
+        await syncClientIdentity(data.access_token, data.user, { email }).catch(() => null);
         const role = await getUserRole(data.access_token);
         localStorage.setItem("vasca_role", role);
 
+        status.textContent = "✓ Bienvenida";
+        status.className = "status success";
+
         setTimeout(() => {
-          if (role === "admin") window.location.href = "admin.html";
-          else window.location.href = "turnos.html";
-        }, 500);
-      } catch (err) {
-        status.textContent = "✗ " + err.message;
+          window.location.href = role === "admin" ? "admin.html" : "turnos.html";
+        }, 450);
+      } catch (error) {
+        status.textContent = `✕ ${error.message}`;
         status.className = "status error";
-        btn.disabled = false;
+        button.disabled = false;
       }
     }
 
-    async function handleRegister(e) {
-      e.preventDefault();
-      const btn = document.getElementById("btn-register");
+    async function handleRegister(event) {
+      event.preventDefault();
+      const button = document.getElementById("btn-register");
       const status = document.getElementById("reg-status");
-      btn.disabled = true;
+      button.disabled = true;
       status.textContent = "Creando cuenta...";
       status.className = "status";
 
       try {
-        const name = document.getElementById("reg-name").value.trim();
+        const fullName = document.getElementById("reg-name").value.trim();
         const phone = document.getElementById("reg-phone").value.trim();
         const email = document.getElementById("reg-email").value;
-        const pass = document.getElementById("reg-pass").value;
+        const password = document.getElementById("reg-pass").value;
 
-        // Signup sin metadata para evitar trigger
-        const res = await fetch(`${SB_URL}/auth/v1/signup`, {
+        const data = await fetchJson(`${SB_URL}/auth/v1/signup`, {
           method: "POST",
-          headers: { "apikey": SB_KEY, "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password: pass })
+          headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            data: { full_name: fullName, phone, role: "client" },
+          }),
         });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error_description || err.msg || "Error al registrar");
-        }
-
-        const data = await res.json();
 
         if (data.access_token) {
           localStorage.setItem("vasca_token", data.access_token);
@@ -260,41 +357,29 @@
           localStorage.setItem("vasca_user", JSON.stringify(data.user));
           localStorage.setItem("vasca_role", "client");
 
-          const authHeaders = {
-            "apikey": SB_KEY,
-            "Authorization": `Bearer ${data.access_token}`,
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal"
-          };
-
-          // Crear perfil en tabla profiles
-          await fetch(`${SB_URL}/rest/v1/profiles`, {
-            method: "POST", headers: authHeaders,
-            body: JSON.stringify({ id: data.user.id, full_name: name, phone: phone, role: "client" })
-          });
-
-          // Crear registro de clienta para turnos
-          try {
-            await fetch(`${SB_URL}/rest/v1/clients`, {
-              method: "POST", headers: authHeaders,
-              body: JSON.stringify({ full_name: name, phone: phone, email: email })
-            });
-          } catch {}
+          await syncClientIdentity(data.access_token, data.user, {
+            full_name: fullName,
+            phone,
+            email,
+          }).catch(() => null);
 
           status.textContent = "✓ Cuenta creada";
           status.className = "status success";
-          setTimeout(() => { window.location.href = "turnos.html"; }, 500);
-        } else {
-          status.textContent = "✓ Revisá tu email para confirmar la cuenta";
-          status.className = "status success";
-          btn.disabled = false;
+          setTimeout(() => { window.location.href = "turnos.html"; }, 450);
+          return;
         }
-      } catch (err) {
-        status.textContent = "✗ " + err.message;
+
+        status.textContent = "✓ Revisá tu email para confirmar la cuenta";
+        status.className = "status success";
+        button.disabled = false;
+      } catch (error) {
+        status.textContent = `✕ ${error.message}`;
         status.className = "status error";
-        btn.disabled = false;
+        button.disabled = false;
       }
     }
+
+    checkSession();
   </script>
 </body>
 </html>

@@ -27,14 +27,39 @@
   <main class="shell">
     <div class="booking-hero">
       <h1>Tus turnos</h1>
-      <p>Reserva un turno nuevo o consulta tus turnos activos.</p>
+      <p>Reservá online, seguí tus beneficios y dejá tu reseña cuando completes tu experiencia.</p>
       <div class="tabs" style="display:flex;gap:8px;justify-content:center;margin-top:20px;">
         <button class="tab-btn active" id="tab-new" onclick="switchTab('new')">Reservar</button>
         <button class="tab-btn" id="tab-mine" onclick="switchTab('mine')">Mis turnos</button>
       </div>
     </div>
 
-    <!-- Step 1: Service -->
+    <section class="loyalty-overview" id="loyalty-overview">
+      <div class="loyalty-card">
+        <div class="loyalty-copy">
+          <span class="loyalty-kicker">Programa de fidelidad</span>
+          <h2>Tu progreso Vasca</h2>
+          <p id="loyalty-copy">Cada turno completado suma puntos para acercarte a tu próximo beneficio.</p>
+        </div>
+        <div class="loyalty-metrics">
+          <div class="loyalty-balance">
+            <span>Puntos acumulados</span>
+            <strong id="loyalty-balance">0</strong>
+          </div>
+          <div class="loyalty-progress-wrap">
+            <div class="loyalty-progress-meta">
+              <span id="loyalty-reward-label">$5.000 de descuento</span>
+              <span id="loyalty-progress-label">0%</span>
+            </div>
+            <div class="loyalty-progress">
+              <span id="loyalty-progress-bar"></span>
+            </div>
+            <p class="loyalty-footnote" id="loyalty-remaining">Te faltan 100 puntos para desbloquear tu próximo beneficio.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="step" id="step-service">
       <div class="step-header">
         <span class="step-num">1</span>
@@ -43,7 +68,6 @@
       <div class="services-selector" id="services-list"></div>
     </section>
 
-    <!-- Step 2: Professional -->
     <section class="step hidden" id="step-professional">
       <div class="step-header">
         <span class="step-num">2</span>
@@ -52,7 +76,6 @@
       <div class="professionals-selector" id="professionals-list"></div>
     </section>
 
-    <!-- Step 3: Date & Time -->
     <section class="step hidden" id="step-datetime">
       <div class="step-header">
         <span class="step-num">3</span>
@@ -72,7 +95,6 @@
       </div>
     </section>
 
-    <!-- Step 4: Your info -->
     <section class="step hidden" id="step-info">
       <div class="step-header">
         <span class="step-num">4</span>
@@ -85,13 +107,12 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Instagram (opcional)</label><input type="text" id="book-ig" placeholder="@"></div>
-          <div class="form-group"><label>Email (opcional)</label><input type="email" id="book-email"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="book-email" placeholder="tu@email.com"></div>
         </div>
         <div class="form-group"><label>Notas (opcional)</label><textarea id="book-notes" rows="2" placeholder="Algo que quieras contarnos..."></textarea></div>
       </div>
     </section>
 
-    <!-- Summary & Confirm -->
     <section class="step hidden" id="step-confirm">
       <div class="summary-card">
         <h2>Tu turno</h2>
@@ -101,21 +122,46 @@
       </div>
     </section>
 
-    <!-- Success -->
     <section class="step hidden" id="step-success">
       <div class="success-card">
         <div class="success-icon">✓</div>
         <h2>¡Turno confirmado!</h2>
         <p id="success-msg"></p>
+        <p class="success-email-note" id="success-email-note"></p>
         <a id="cal-link" href="#" target="_blank" rel="noopener" class="btn-home" style="margin-bottom:12px;background:var(--accent);">📅 Agregar al calendario</a>
         <a href="index.html" class="btn-home">Volver al inicio</a>
       </div>
     </section>
-    <!-- My Appointments -->
-    <section id="view-my-appointments" style="display:none;">
+
+    <section id="view-my-appointments" class="my-view" style="display:none;">
+      <div class="my-view-header">
+        <div>
+          <h2>Mis turnos</h2>
+          <p>Desde acá podés revisar próximos turnos, cancelar reservas y dejar tu reseña cuando una experiencia quede completada.</p>
+        </div>
+      </div>
       <div class="my-appts-list" id="my-appts-list"><p class="hint">Cargando tus turnos...</p></div>
     </section>
   </main>
+
+  <div class="modal-overlay" id="review-modal">
+    <div class="review-modal-card">
+      <button class="modal-close" onclick="vasca.closeReviewModal()" aria-label="Cerrar">✕</button>
+      <span class="review-kicker">Reseña verificada</span>
+      <h2 id="review-modal-title">Contanos cómo fue tu experiencia</h2>
+      <p class="review-description">Tu reseña queda vinculada a un turno real y pasa por moderación antes de publicarse en la web.</p>
+      <div class="review-stars" id="review-stars">
+        <button type="button" class="review-star" data-value="1" onclick="vasca.setReviewRating(1)">★</button>
+        <button type="button" class="review-star" data-value="2" onclick="vasca.setReviewRating(2)">★</button>
+        <button type="button" class="review-star" data-value="3" onclick="vasca.setReviewRating(3)">★</button>
+        <button type="button" class="review-star" data-value="4" onclick="vasca.setReviewRating(4)">★</button>
+        <button type="button" class="review-star" data-value="5" onclick="vasca.setReviewRating(5)">★</button>
+      </div>
+      <textarea id="review-comment" rows="5" placeholder="Contanos qué te gustó de tu servicio, el resultado o la atención."></textarea>
+      <button class="btn-confirm" id="review-submit" onclick="submitReview()">Enviar reseña</button>
+      <div class="form-status" id="review-status"></div>
+    </div>
+  </div>
 
   <script src="turnos.js"></script>
 </body>
