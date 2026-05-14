@@ -70,8 +70,6 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(135deg, rgba(255, 248, 241, 0.18), rgba(255, 248, 241, 0.05));
   border: 1px solid rgba(255, 248, 241, 0.18);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.34);
-  opacity: 0;
-  animation: loaderFadeUp 0.8s 0.1s cubic-bezier(.23,1,.32,1) forwards;
 }
 
 .page-loader-mark img {
@@ -87,8 +85,6 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: rgba(245, 239, 232, 0.72);
-  opacity: 0;
-  animation: loaderFadeUp 0.7s 0.3s cubic-bezier(.23,1,.32,1) forwards;
 }
 
 .page-loader-wordmark {
@@ -98,8 +94,6 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: 0.18em;
   margin-bottom: 16px;
   color: #fff8f1;
-  opacity: 0;
-  animation: loaderFadeUp 0.7s 0.45s cubic-bezier(.23,1,.32,1) forwards;
 }
 
 .page-loader-copy {
@@ -107,8 +101,6 @@ a { color: inherit; text-decoration: none; }
   margin: 0 auto 28px;
   color: rgba(245, 239, 232, 0.74);
   line-height: 1.7;
-  opacity: 0;
-  animation: loaderFadeUp 0.7s 0.6s cubic-bezier(.23,1,.32,1) forwards;
 }
 
 .page-loader-progress {
@@ -117,8 +109,6 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
   border-radius: 999px;
   background: rgba(255, 248, 241, 0.12);
-  opacity: 0;
-  animation: loaderFadeUp 0.5s 0.75s cubic-bezier(.23,1,.32,1) forwards;
 }
 
 .page-loader-progress span {
@@ -137,11 +127,6 @@ a { color: inherit; text-decoration: none; }
 @keyframes loaderSweep {
   0% { transform: translateX(-140%); }
   100% { transform: translateX(400%); }
-}
-
-@keyframes loaderFadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── ANIMATIONS ────────────────────────────────── */
