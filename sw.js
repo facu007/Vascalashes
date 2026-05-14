@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vasca-v2';
+const CACHE_NAME = 'vasca-v3';
 const ASSETS = ['/', '/index.html', '/styles.css', '/main.js', '/icon-192.png', '/vasca-avatar.jpg'];
 
 self.addEventListener('install', e => {
