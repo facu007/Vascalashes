@@ -207,7 +207,7 @@
           <div class="gallery-item"><img src="img/foto6.jpg" alt="Resultado Vasca" loading="lazy"></div>
           <div class="gallery-item"><img src="img/foto7.jpg" alt="Clienta Vasca" loading="lazy"></div>
           <div class="gallery-item"><img src="img/foto8.jpg" alt="Clienta Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto9.jpg" alt="Resultado Vasca" loading="lazy"></div>
+          <div class="gallery-item desktop-only"><img src="img/foto9.jpg" alt="Resultado Vasca" loading="lazy"></div>
         </div>
 
         <div class="team-duo">
@@ -246,6 +246,58 @@
     </div>
   </footer>
 
+  <!-- PWA Install Banner -->
+  <div class="pwa-banner" id="pwa-banner" style="display:none;">
+    <div class="pwa-banner-inner">
+      <img src="vasca-avatar.jpg" alt="Vasca" class="pwa-banner-icon">
+      <div class="pwa-banner-text">
+        <strong>Instalá Vasca</strong>
+        <span>Acceso rápido desde tu pantalla de inicio</span>
+      </div>
+      <button class="pwa-banner-btn" id="pwa-install-btn">Instalar</button>
+      <button class="pwa-banner-close" id="pwa-close-btn" aria-label="Cerrar">✕</button>
+    </div>
+  </div>
+
   <script src="main.js"></script>
+  <script>
+    // PWA Install Prompt
+    (function() {
+      let deferredPrompt = null;
+      const banner = document.getElementById('pwa-banner');
+      const installBtn = document.getElementById('pwa-install-btn');
+      const closeBtn = document.getElementById('pwa-close-btn');
+
+      // Don't show if already installed (standalone) or dismissed
+      if (window.matchMedia('(display-mode: standalone)').matches) return;
+      if (navigator.standalone === true) return;
+      if (sessionStorage.getItem('vasca-pwa-dismissed')) return;
+
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        banner.style.display = 'flex';
+      });
+
+      installBtn.addEventListener('click', function() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {
+          deferredPrompt = null;
+          banner.style.display = 'none';
+        });
+      });
+
+      closeBtn.addEventListener('click', function() {
+        banner.style.display = 'none';
+        sessionStorage.setItem('vasca-pwa-dismissed', '1');
+      });
+
+      window.addEventListener('appinstalled', function() {
+        banner.style.display = 'none';
+        deferredPrompt = null;
+      });
+    })();
+  </script>
 </body>
 </html>
