@@ -52,11 +52,21 @@ if ("serviceWorker" in navigator) {
       hidden = true;
       sessionStorage.setItem(LOADER_SESSION_KEY, "1");
       loader.classList.add("is-hidden");
-      window.setTimeout(() => loader.remove(), reducedMotion ? 20 : 680);
+      window.setTimeout(() => loader.remove(), reducedMotion ? 20 : 700);
     };
 
-    window.addEventListener("load", hideLoader, { once: true });
-    window.setTimeout(hideLoader, 2600);
+    // Wait for everything: fonts, images, and a minimum display time
+    const minTime = new Promise(r => setTimeout(r, 1800));
+    const pageLoad = new Promise(r => {
+      if (document.readyState === "complete") r();
+      else window.addEventListener("load", r, { once: true });
+    });
+    const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+
+    Promise.all([minTime, pageLoad, fontsReady]).then(hideLoader);
+
+    // Safety fallback
+    window.setTimeout(hideLoader, 6000);
   }
 
   function initScrollReveal() {
