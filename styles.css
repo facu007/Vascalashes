@@ -385,6 +385,56 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
 .reason-item h4 { font-family: "Cormorant Garamond", serif; font-size: 1.5rem; margin-bottom: 12px; color: var(--text); }
 .reason-item p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
 
+/* ─── NOSOTROS ───────────────────────────────── */
+.nosotros-section {
+  padding: 100px 0;
+  background: linear-gradient(180deg, #ede3d5 0%, var(--bg) 100%);
+}
+.nosotros-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 48px; align-items: center;
+}
+.nosotros-carousel {
+  position: relative; border-radius: 24px; overflow: hidden;
+  aspect-ratio: 4/5;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+}
+.carousel-slide {
+  position: absolute; inset: 0;
+  opacity: 0; z-index: 1;
+  transition: opacity 1.2s ease;
+}
+.carousel-slide.active {
+  opacity: 1; z-index: 3;
+}
+.carousel-slide.fade-out {
+  opacity: 0; z-index: 2;
+  transition: opacity 1.2s ease;
+}
+.carousel-slide img,
+.carousel-slide video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.carousel-dots {
+  position: absolute; bottom: 16px; left: 50%;
+  transform: translateX(-50%); z-index: 10;
+  display: flex; gap: 8px;
+}
+.carousel-dots .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.5); transition: all 0.3s;
+  cursor: pointer;
+}
+.carousel-dots .dot.active {
+  background: #fff; transform: scale(1.3);
+}
+.nosotros-copy .section-title {
+  font-size: clamp(2.4rem, 5vw, 4rem); margin-bottom: 20px;
+}
+.nosotros-copy .section-copy {
+  font-size: 1.15rem; line-height: 1.8; max-width: 440px;
+}
+
 /* ─── "NO HAY NOSOTROS SIN USTEDES" ─────────── */
 .community-section {
   padding: 120px 0 100px;
@@ -618,6 +668,12 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
 
   .reasons-block { grid-template-columns: 1fr; gap: 24px; }
   .reason-item { padding: 24px; }
+
+  /* ── NOSOTROS ── */
+  .nosotros-section { padding: 60px 0; }
+  .nosotros-grid { grid-template-columns: 1fr; gap: 32px; }
+  .nosotros-copy { text-align: center; }
+  .nosotros-copy .section-copy { margin: 0 auto; }
 
   /* ── COMMUNITY: antes/después ── */
   .community-section { padding: 80px 0 60px; }

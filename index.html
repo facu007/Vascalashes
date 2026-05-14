@@ -51,6 +51,7 @@
       <button class="nav-toggle" id="nav-toggle" aria-label="Menú" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
       <nav class="topbar-nav" id="topbar-nav">
         <a class="topbar-nav-link" href="#servicios" onclick="this.parentElement.classList.remove('open')">Servicios</a>
+        <a class="topbar-nav-link" href="#nosotros" onclick="this.parentElement.classList.remove('open')">Nosotros</a>
         <a class="topbar-nav-link" href="#comunidad" onclick="this.parentElement.classList.remove('open')">Comunidad</a>
         <a class="topbar-nav-link" href="#testimonios" onclick="this.parentElement.classList.remove('open')">Opiniones</a>
         <a class="topbar-link" id="auth-link" href="login.html">Iniciar sesión</a>
@@ -142,6 +143,34 @@
           <div class="reason-item reveal">
             <div class="reason-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
             <h4>Diseño personalizado</h4><p>Cada mirada se adapta a la estructura del ojo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOSOTROS -->
+    <section id="nosotros" class="nosotros-section">
+      <div class="shell">
+        <div class="nosotros-grid reveal">
+          <div class="nosotros-carousel" id="nosotros-carousel">
+            <div class="carousel-slide active">
+              <img src="img/fotovasca1.jpg" alt="Vasca equipo" loading="lazy">
+            </div>
+            <div class="carousel-slide">
+              <video src="img/videovasca1.mp4" muted loop playsinline preload="none"></video>
+            </div>
+            <div class="carousel-slide">
+              <video src="img/videoavasca2.mp4" muted loop playsinline preload="none"></video>
+            </div>
+            <div class="carousel-dots" id="carousel-dots">
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+          <div class="nosotros-copy">
+            <h2 class="section-title">Nosotros</h2>
+            <p class="section-copy">Somos Vasca, Fer y Fefi, un equipo que trabaja con criterio, respeto y cuidado real en cada servicio.</p>
           </div>
         </div>
       </div>

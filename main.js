@@ -362,5 +362,54 @@ if ("serviceWorker" in navigator) {
     loadServicesPreview();
     loadTestimonials();
     syncAuthLinks();
+    initNosotrosCarousel();
   });
+
+  function initNosotrosCarousel() {
+    const slides = document.querySelectorAll("#nosotros-carousel .carousel-slide");
+    const dots = document.querySelectorAll("#carousel-dots .dot");
+    if (!slides.length) return;
+
+    let current = 0;
+    const total = slides.length;
+
+    function goTo(idx) {
+      const prev = current;
+      current = idx % total;
+      if (prev === current) return;
+
+      // Mark previous as fading out
+      slides[prev].classList.remove("active");
+      slides[prev].classList.add("fade-out");
+      const prevVideo = slides[prev].querySelector("video");
+      if (prevVideo) { prevVideo.pause(); }
+
+      // Clean fade-out after transition
+      setTimeout(() => {
+        slides[prev].classList.remove("fade-out");
+        if (prevVideo) prevVideo.currentTime = 0;
+      }, 1200);
+
+      // Activate new slide
+      slides[current].classList.add("active");
+      dots.forEach(d => d.classList.remove("active"));
+      dots[current].classList.add("active");
+
+      // Play video if active
+      const video = slides[current].querySelector("video");
+      if (video) video.play().catch(() => {});
+    }
+
+    // Auto-rotate every 3 seconds
+    let timer = setInterval(() => goTo(current + 1), 4000);
+
+    // Click on dots
+    dots.forEach((dot, i) => {
+      dot.addEventListener("click", () => {
+        clearInterval(timer);
+        goTo(i);
+        timer = setInterval(() => goTo(current + 1), 4000);
+      });
+    });
+  }
 })();
