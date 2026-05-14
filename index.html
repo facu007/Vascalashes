@@ -19,11 +19,12 @@
     .page-loader-shell{width:min(100%,420px);text-align:center;color:#f5efe8;display:flex;flex-direction:column;align-items:center}
     .page-loader-mark{width:104px;height:104px;margin-bottom:24px;padding:10px;border-radius:50%;background:linear-gradient(135deg,rgba(255,248,241,.18),rgba(255,248,241,.05));border:1px solid rgba(255,248,241,.18)}
     .page-loader-mark img{width:100%;height:100%;border-radius:50%;object-fit:cover}
-    .page-loader-wordmark{font-size:clamp(3.4rem,12vw,5.6rem);line-height:.9;letter-spacing:.18em;margin-bottom:16px;color:#fff8f1;font-family:serif}
+    .page-loader-wordmark{min-height:1em;font-size:clamp(3.4rem,12vw,5.6rem);line-height:.9;letter-spacing:.18em;margin-bottom:16px;color:#fff8f1;font-family:serif;visibility:hidden}
     .page-loader-kicker{margin-bottom:12px;font-size:.78rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(245,239,232,.72)}
     .page-loader-copy{max-width:28ch;margin:0 auto 28px;color:rgba(245,239,232,.74);line-height:1.7}
     .page-loader-progress{width:min(100%,260px);height:2px;overflow:hidden;border-radius:999px;background:rgba(255,248,241,.12)}
     html.skip-loader .page-loader{display:none}
+    .page-loader.fonts-ready .page-loader-wordmark{visibility:visible;font-family:"Cormorant Garamond",serif}
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
