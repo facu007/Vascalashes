@@ -408,6 +408,13 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
 .gallery-item { aspect-ratio: 4/5; }
 .gallery-item:hover img { transform: scale(1.06); }
 
+/* Si hay una cantidad PAR de fotos, ocultar la última para mantener número IMPAR en computadora */
+@media (min-width: 769px) {
+  .community-gallery .gallery-item:nth-child(even):last-child {
+    display: none !important;
+  }
+}
+
 /* Team duo (always side by side) */
 .team-duo {
   display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
@@ -635,8 +642,11 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
   .nosotros-copy { text-align: center; }
   .nosotros-copy .section-copy { margin: 0 auto; }
 
-  /* ── GALLERY: 8 fotos en mobile ── */
-  .desktop-only { display: none !important; }
+  /* ── GALLERY: Siempre cantidad PAR en mobile ── */
+  /* Si hay una cantidad IMPAR de fotos, ocultar la última para mantener número PAR en celular */
+  .community-gallery .gallery-item:nth-child(odd):last-child {
+    display: none !important;
+  }
 
   /* ── COMMUNITY: antes/después ── */
   .community-section { padding: 80px 0 60px; }
