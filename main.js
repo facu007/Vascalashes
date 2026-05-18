@@ -41,6 +41,9 @@ if ("serviceWorker" in navigator) {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("visible");
+            entry.target.addEventListener('animationend', () => {
+              entry.target.classList.remove("reveal", "reveal-left", "reveal-right", "reveal-scale", "visible");
+            }, { once: true });
             observer.unobserve(entry.target);
           }
         });
@@ -63,6 +66,10 @@ if ("serviceWorker" in navigator) {
               const idx = Array.from(items).indexOf(entry.target);
               entry.target.style.animationDelay = `${idx * 0.1}s`;
               entry.target.classList.add("visible");
+              entry.target.addEventListener('animationend', () => {
+                entry.target.classList.remove("reveal", "visible");
+                entry.target.style.animationDelay = '';
+              }, { once: true });
               observer.unobserve(entry.target);
             }
           });
@@ -255,12 +262,31 @@ if ("serviceWorker" in navigator) {
     }
 
     grid.innerHTML = testimonials.map((testimonial) => `
-      <article class="testimonial-card">
+      <article class="testimonial-card reveal">
         <div class="stars">${createStarsMarkup(testimonial.rating)}</div>
         <p class="testimonial-text">${quoteText(escapeHtml(testimonial.comment))}</p>
         <div class="testimonial-author">${escapeHtml(testimonial.author_label)}</div>
       </article>
     `).join("");
+
+    // Animate newly added testimonials
+    const items = grid.children;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const idx = Array.from(items).indexOf(entry.target);
+          entry.target.style.animationDelay = `${idx * 0.1}s`;
+          entry.target.classList.add("visible");
+          entry.target.addEventListener('animationend', () => {
+            entry.target.classList.remove("reveal", "visible");
+            entry.target.style.animationDelay = '';
+          }, { once: true });
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    
+    Array.from(items).forEach((item) => observer.observe(item));
   }
 
   async function loadTestimonials() {

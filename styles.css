@@ -53,7 +53,7 @@ a { color: inherit; text-decoration: none; }
 }
 @keyframes marquee {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(-100%); }
 }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
@@ -204,10 +204,9 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
 .brand-watermark { padding: 40px 0 0; overflow: hidden; background-color: var(--bg); }
 .watermark-container { width: 100%; overflow: hidden; display: flex; white-space: nowrap; }
 .watermark-track {
-  display: flex; flex-wrap: nowrap; width: max-content;
+  display: flex; flex-wrap: nowrap; flex-shrink: 0;
   animation: marquee 20s linear infinite;
 }
-.watermark-group { display: flex; flex-shrink: 0; }
 .watermark-text {
   font-family: "Cormorant Garamond", serif;
   font-size: clamp(6rem, 12vw, 15rem); font-weight: 400;
@@ -712,14 +711,11 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  /* Las siguientes reglas estaban bloqueando TODAS las animaciones si el usuario tiene desactivadas las animaciones en Windows/iOS:
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .page-loader-progress span {
-    width: 100%;
-    transform: translateX(0);
-    background: #c9a88e;
-  }
+  */
 }
