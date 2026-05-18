@@ -205,7 +205,7 @@ h1 { max-width: 12ch; font-size: clamp(3rem, 7vw, 5.8rem); line-height: 0.94; }
 .watermark-container { width: 100%; overflow: hidden; display: flex; white-space: nowrap; }
 .watermark-track {
   display: flex; flex-wrap: nowrap; flex-shrink: 0;
-  animation: marquee 20s linear infinite;
+  animation: marquee 40s linear infinite;
 }
 .watermark-text {
   font-family: "Cormorant Garamond", serif;
