@@ -163,6 +163,11 @@ body {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
 }
 
+.stat-card.highlight {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
 .stat-number {
   font-family: "Cormorant Garamond", serif;
   font-size: 2.8rem;

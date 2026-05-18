@@ -606,3 +606,52 @@ SELECT
   (((total_visits * 10) % 100) * 100 / 100) AS progress_pct,
   FLOOR((total_visits * 10) / 100) AS rewards_available
 FROM clients;
+
+
+-- =============================================================
+-- VISTAS AVANZADAS: KPI Y DASHBOARD IDEAL
+-- =============================================================
+
+-- Facturación, Tasa de Cancelación y Ticket Promedio (Por mes)
+DROP VIEW IF EXISTS v_admin_kpis_monthly CASCADE;
+CREATE OR REPLACE VIEW v_admin_kpis_monthly AS
+SELECT
+  TO_CHAR(DATE_TRUNC('month', appointment_date), 'YYYY-MM') AS month_id,
+  SUM(CASE WHEN status = 'completed' THEN COALESCE(price_ars, 0) ELSE 0 END) AS total_revenue,
+  COUNT(CASE WHEN status = 'completed' THEN 1 END) AS completed_count,
+  COUNT(CASE WHEN status = 'cancelled' THEN 1 END) AS cancelled_count,
+  COUNT(*) AS total_appointments,
+  CASE WHEN COUNT(CASE WHEN status IN ('completed', 'cancelled') THEN 1 END) > 0 
+       THEN (COUNT(CASE WHEN status = 'cancelled' THEN 1 END)::FLOAT / COUNT(CASE WHEN status IN ('completed', 'cancelled') THEN 1 END)) * 100 
+       ELSE 0 END AS cancellation_rate,
+  CASE WHEN COUNT(CASE WHEN status = 'completed' THEN 1 END) > 0 
+       THEN SUM(CASE WHEN status = 'completed' THEN COALESCE(price_ars, 0) ELSE 0 END) / COUNT(CASE WHEN status = 'completed' THEN 1 END) 
+       ELSE 0 END AS average_ticket
+FROM appointments
+GROUP BY DATE_TRUNC('month', appointment_date)
+ORDER BY month_id DESC;
+
+-- Servicios más vendidos e Ingresos por servicio
+DROP VIEW IF EXISTS v_admin_services_sold CASCADE;
+CREATE OR REPLACE VIEW v_admin_services_sold AS
+SELECT
+  s.name AS service_name,
+  COUNT(a.id) AS times_sold,
+  SUM(COALESCE(a.price_ars, 0)) AS total_revenue
+FROM appointments a
+JOIN services s ON s.id = a.service_id
+WHERE a.status = 'completed'
+GROUP BY s.id, s.name
+ORDER BY times_sold DESC;
+
+-- Nuevas vs Recurrentes y Retención
+DROP VIEW IF EXISTS v_admin_client_stats CASCADE;
+CREATE OR REPLACE VIEW v_admin_client_stats AS
+SELECT
+  COUNT(id) AS total_clients,
+  COUNT(CASE WHEN total_visits > 1 THEN 1 END) AS recurring_clients,
+  COUNT(CASE WHEN total_visits = 1 THEN 1 END) AS new_clients,
+  CASE WHEN COUNT(CASE WHEN total_visits > 0 THEN 1 END) > 0 
+       THEN (COUNT(CASE WHEN total_visits > 1 THEN 1 END)::FLOAT / COUNT(CASE WHEN total_visits > 0 THEN 1 END)) * 100 
+       ELSE 0 END AS retention_rate
+FROM clients;

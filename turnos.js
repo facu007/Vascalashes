@@ -303,6 +303,7 @@
     hide("step-info");
     hide("step-confirm");
     document.getElementById("book-date").value = "";
+    if (typeof renderCalendar === "function") renderCalendar();
     document.getElementById("time-slots").innerHTML = "<p class='hint'>Elegí una fecha para ver horarios</p>";
     show("step-datetime");
   }
@@ -685,8 +686,74 @@
     }
   }
 
+  let currentCalDate = new Date();
+
+  function renderCalendar() {
+    const grid = document.getElementById("calendar-grid");
+    const monthYear = document.getElementById("cal-month-year");
+    if (!grid || !monthYear) return;
+
+    grid.innerHTML = "";
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    monthYear.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay(); // 0 = Domingo
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement("div");
+      empty.className = "cal-day empty";
+      grid.appendChild(empty);
+    }
+
+    const todayStr = today();
+    const inputDate = document.getElementById("book-date");
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cell = document.createElement("div");
+      const cellDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      
+      cell.className = "cal-day";
+      cell.textContent = day;
+
+      if (cellDateStr === todayStr) {
+        cell.classList.add("today");
+      }
+
+      if (cellDateStr < todayStr) {
+        cell.classList.add("disabled");
+      } else {
+        if (selected.date === cellDateStr) {
+          cell.classList.add("selected");
+        }
+        cell.addEventListener("click", () => {
+          selected.date = cellDateStr;
+          document.querySelectorAll(".cal-day.selected").forEach(el => el.classList.remove("selected"));
+          cell.classList.add("selected");
+          inputDate.value = cellDateStr;
+          inputDate.dispatchEvent(new Event("change"));
+        });
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  function changeMonth(offset) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + offset);
+    renderCalendar();
+  }
+
   function bindEvents() {
     document.getElementById("book-date").addEventListener("change", loadSlots);
+    
+    const prevBtn = document.getElementById("cal-prev");
+    const nextBtn = document.getElementById("cal-next");
+    if (prevBtn) prevBtn.addEventListener("click", () => changeMonth(-1));
+    if (nextBtn) nextBtn.addEventListener("click", () => changeMonth(1));
+
     ["book-name", "book-phone"].forEach((id) => {
       document.getElementById(id).addEventListener("input", checkShowSummary);
     });
@@ -697,8 +764,8 @@
 
   async function init() {
     bindEvents();
+    renderCalendar();
     document.getElementById("services-list").innerHTML = "<div class='skeleton skeleton-card'></div><div class='skeleton skeleton-card'></div><div class='skeleton skeleton-card'></div>";
-    document.getElementById("book-date").min = today();
 
     try {
       [professionals, services, prices] = await Promise.all([

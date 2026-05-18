@@ -54,7 +54,14 @@
         <div class="stat-card"><div class="stat-number" id="stat-today">0</div><div class="stat-label">Turnos hoy</div></div>
         <div class="stat-card"><div class="stat-number" id="stat-week">0</div><div class="stat-label">Esta semana</div></div>
         <div class="stat-card"><div class="stat-number" id="stat-pending">0</div><div class="stat-label">Pendientes</div></div>
-        <div class="stat-card"><div class="stat-number" id="stat-clients">0</div><div class="stat-label">Clientas</div></div>
+        <div class="stat-card"><div class="stat-number" id="stat-clients">0</div><div class="stat-label">Clientas Totales</div></div>
+      </div>
+
+      <div class="stats-grid" style="margin-top:16px;">
+        <div class="stat-card highlight"><div class="stat-number" id="stat-revenue">$0</div><div class="stat-label">Facturación Mes</div></div>
+        <div class="stat-card highlight"><div class="stat-number" id="stat-ticket">$0</div><div class="stat-label">Ticket Promedio</div></div>
+        <div class="stat-card"><div class="stat-number" id="stat-retention">0%</div><div class="stat-label">Retención</div></div>
+        <div class="stat-card"><div class="stat-number" id="stat-cancel">0%</div><div class="stat-label">Cancelación</div></div>
       </div>
 
       <div class="panel">
@@ -91,6 +98,27 @@
             <span>Últimos 60 días</span>
           </div>
           <canvas id="chart-hours"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Facturación mensual</h3>
+            <span>Ingresos brutos</span>
+          </div>
+          <canvas id="chart-revenue"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Servicios más vendidos</h3>
+            <span>Top servicios</span>
+          </div>
+          <canvas id="chart-services-sold"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Composición de clientas</h3>
+            <span>Nuevas vs Recurrentes</span>
+          </div>
+          <canvas id="chart-clients"></canvas>
         </div>
         <div class="chart-card">
           <div class="chart-card-header">

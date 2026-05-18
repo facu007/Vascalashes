@@ -258,12 +258,26 @@
     if (!window.Chart) return;
 
     try {
-      const [daily, load, hours, status] = await Promise.all([
+      const [daily, load, status, kpisMonthly, services, clientStats] = await Promise.all([
         api("v_admin_daily_ops", "select=*"),
         api("v_admin_professional_load", "select=*"),
-        api("v_admin_hourly_distribution", "select=*"),
         api("v_admin_status_mix", "select=*"),
+        api("v_admin_kpis_monthly", "select=*&order=month_id.asc"),
+        api("v_admin_services_sold", "select=*"),
+        api("v_admin_client_stats", "select=*&limit=1"),
       ]);
+
+      const currentMonth = kpisMonthly && kpisMonthly.length ? kpisMonthly[kpisMonthly.length - 1] : null;
+      if (currentMonth) {
+        document.getElementById("stat-revenue").textContent = `$${Number(currentMonth.total_revenue).toLocaleString("es-AR")}`;
+        document.getElementById("stat-ticket").textContent = `$${Number(currentMonth.average_ticket).toLocaleString("es-AR")}`;
+        document.getElementById("stat-cancel").textContent = `${Number(currentMonth.cancellation_rate).toFixed(1)}%`;
+      }
+      
+      const stats = clientStats?.[0];
+      if (stats) {
+        document.getElementById("stat-retention").textContent = `${Number(stats.retention_rate).toFixed(1)}%`;
+      }
 
       upsertChart("daily", "chart-daily", {
         type: "line",
@@ -311,16 +325,49 @@
         },
       });
 
-      upsertChart("hours", "chart-hours", {
+      upsertChart("revenue", "chart-revenue", {
         type: "bar",
         data: {
-          labels: hours.filter((row) => row.total_appointments > 0).map((row) => row.hour_label),
+          labels: (kpisMonthly || []).map((row) => {
+            const [y, m] = row.month_id.split("-");
+            return new Date(y, m - 1, 1).toLocaleDateString("es-AR", { month: "short", year: "2-digit" });
+          }),
           datasets: [
             {
-              label: "Turnos",
-              data: hours.filter((row) => row.total_appointments > 0).map((row) => row.total_appointments),
-              backgroundColor: "rgba(116,185,255,0.65)",
-              borderRadius: 8,
+              label: "Ingresos Brutos ($)",
+              data: (kpisMonthly || []).map((row) => row.total_revenue),
+              backgroundColor: "rgba(116,185,255,0.85)",
+              borderRadius: 6,
+            },
+          ],
+        },
+      });
+
+      upsertChart("services", "chart-services-sold", {
+        type: "bar",
+        options: { indexAxis: "y" },
+        data: {
+          labels: (services || []).slice(0, 5).map((row) => row.service_name),
+          datasets: [
+            {
+              label: "Cantidad",
+              data: (services || []).slice(0, 5).map((row) => row.times_sold),
+              backgroundColor: "#6bcb77",
+              borderRadius: 6,
+            },
+          ],
+        },
+      });
+
+      upsertChart("clients", "chart-clients", {
+        type: "doughnut",
+        data: {
+          labels: ["Nuevas", "Recurrentes"],
+          datasets: [
+            {
+              data: stats ? [stats.new_clients, stats.recurring_clients] : [0, 0],
+              backgroundColor: ["#74b9ff", "#c9a88e"],
+              borderWidth: 0,
             },
           ],
         },
@@ -340,7 +387,7 @@
         },
       });
     } catch {
-      ["daily", "load", "hours", "status"].forEach((key) => {
+      ["daily", "load", "revenue", "services", "clients", "status"].forEach((key) => {
         if (charts[key]) {
           charts[key].destroy();
           charts[key] = null;
