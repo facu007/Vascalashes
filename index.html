@@ -21,6 +21,7 @@
   <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
+  <link rel="preload" as="image" href="fotos/vasca.png">
 </head>
 <body>
 
@@ -54,7 +55,7 @@
           </div>
         </div>
         <article class="hero-card">
-          <img src="fotos/vasca.png" alt="Vasca turnos">
+          <img src="fotos/vasca.png" alt="Logo corporativo Vasca Turnos" fetchpriority="high" width="240" height="240">
           <h2>Turnos inteligentes</h2>
           <p>Con calendario en tiempo real, reserva rápida y confirmación automática por correo.</p>
         </article>
@@ -187,26 +188,26 @@
         </div>
 
         <div class="community-gallery">
-          <div class="gallery-item"><img src="img/foto1.jpg" alt="Clienta Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto2.jpg" alt="Resultado Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto3.jpg" alt="Clienta Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto4.jpg" alt="Resultado Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto6.jpg" alt="Resultado Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto7.jpg" alt="Clienta Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto8.jpg" alt="Clienta Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/foto9.jpg" alt="Resultado Vasca" loading="lazy"></div>
+          <div class="gallery-item"><img src="img/foto1.jpg" alt="Clienta Vasca pestañas" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto2.jpg" alt="Resultado Vasca laminado" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto3.jpg" alt="Clienta Vasca cejas" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto4.jpg" alt="Resultado Vasca lifting" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto6.jpg" alt="Resultado Vasca natural" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto7.jpg" alt="Clienta Vasca satisfecha" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto8.jpg" alt="Clienta Vasca perfilado" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/foto9.jpg" alt="Resultado Vasca maquillaje" loading="lazy" width="400" height="500"></div>
         </div>
 
         <div class="team-duo">
-          <div class="gallery-item"><img src="img/fotoconjunto1.jpg" alt="El equipo Vasca" loading="lazy"></div>
-          <div class="gallery-item"><img src="img/fotoconjunto2.jpg" alt="El equipo Vasca" loading="lazy"></div>
+          <div class="gallery-item"><img src="img/fotoconjunto1.jpg" alt="El equipo Vasca" loading="lazy" width="400" height="500"></div>
+          <div class="gallery-item"><img src="img/fotoconjunto2.jpg" alt="El equipo Vasca" loading="lazy" width="400" height="500"></div>
         </div>
 
         <div class="community-videos">
-          <div class="video-card"><video src="img/video.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
-          <div class="video-card"><video src="img/video2.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
-          <div class="video-card"><video src="img/video3.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
-          <div class="video-card"><video src="img/video4.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video.mp4" muted loop playsinline preload="metadata" width="360" height="640"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video2.mp4" muted loop playsinline preload="metadata" width="360" height="640"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video3.mp4" muted loop playsinline preload="metadata" width="360" height="640"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video4.mp4" muted loop playsinline preload="metadata" width="360" height="640"></video><div class="video-overlay"></div></div>
         </div>
       </div>
     </section>
@@ -246,7 +247,7 @@
     </div>
   </div>
 
-  <script src="main.js"></script>
+  <script src="main.js" defer></script>
   <script>
     // PWA Install Prompt
     (function() {
