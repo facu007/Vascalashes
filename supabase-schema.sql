@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS blocked_dates (
 -- Datos de las clientas
 CREATE TABLE IF NOT EXISTS clients (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  auth_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- Vinculación con Supabase Auth
   full_name   TEXT NOT NULL,
   phone       TEXT NOT NULL,
   email       TEXT,
@@ -155,6 +156,20 @@ CREATE TABLE IF NOT EXISTS appointment_history (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ─── 11. TABLA: reviews ─────────────────────────────────────
+-- Reseñas de los turnos completados
+CREATE TABLE IF NOT EXISTS reviews (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  appointment_id  UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+  client_id       UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  rating          INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment         TEXT NOT NULL,
+  is_approved     BOOLEAN DEFAULT FALSE,
+  is_published    BOOLEAN DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(appointment_id)
+);
+
 
 -- =============================================================
 -- ÍNDICES
@@ -196,22 +211,27 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers de updated_at
+DROP TRIGGER IF EXISTS trg_professionals_updated ON professionals;
 CREATE TRIGGER trg_professionals_updated
   BEFORE UPDATE ON professionals
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trg_services_updated ON services;
 CREATE TRIGGER trg_services_updated
   BEFORE UPDATE ON services
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trg_service_professional_prices_updated ON service_professional_prices;
 CREATE TRIGGER trg_service_professional_prices_updated
   BEFORE UPDATE ON service_professional_prices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trg_clients_updated ON clients;
 CREATE TRIGGER trg_clients_updated
   BEFORE UPDATE ON clients
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trg_appointments_updated ON appointments;
 CREATE TRIGGER trg_appointments_updated
   BEFORE UPDATE ON appointments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -222,12 +242,13 @@ RETURNS TRIGGER AS $$
 BEGIN
   IF OLD.status IS DISTINCT FROM NEW.status THEN
     INSERT INTO appointment_history (appointment_id, old_status, new_status, changed_by)
-    VALUES (NEW.id, OLD.status, NEW.status, 'system');
+    VALUES (NEW.id, OLD.status, NEW.status, COALESCE(auth.role(), 'system'));
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_appointment_status_log ON appointments;
 CREATE TRIGGER trg_appointment_status_log
   AFTER UPDATE ON appointments
   FOR EACH ROW EXECUTE FUNCTION log_appointment_status_change();
@@ -241,8 +262,9 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_increment_visits ON appointments;
 CREATE TRIGGER trg_increment_visits
   AFTER UPDATE ON appointments
   FOR EACH ROW EXECUTE FUNCTION increment_client_visits();
@@ -269,9 +291,37 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_check_overlap ON appointments;
 CREATE TRIGGER trg_check_overlap
   BEFORE INSERT OR UPDATE ON appointments
   FOR EACH ROW EXECUTE FUNCTION check_appointment_overlap();
+
+-- Función para establecer el precio automáticamente antes de insertar el turno
+CREATE OR REPLACE FUNCTION set_appointment_price()
+RETURNS TRIGGER AS $$
+DECLARE
+  actual_price DECIMAL(12, 2);
+BEGIN
+  -- Buscar el precio actual del servicio con esa profesional
+  SELECT price_ars INTO actual_price
+  FROM service_professional_prices
+  WHERE service_id = NEW.service_id AND professional_id = NEW.professional_id AND is_active = TRUE;
+  
+  IF actual_price IS NULL THEN
+    RAISE EXCEPTION 'El servicio no está disponible con esta profesional o no tiene precio asignado.';
+  END IF;
+
+  -- Sobrescribir siempre con el precio real del catálogo para asegurar integridad (evita manipulación del frontend)
+  NEW.price_ars = actual_price;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_set_appointment_price ON appointments;
+CREATE TRIGGER trg_set_appointment_price
+  BEFORE INSERT ON appointments
+  FOR EACH ROW EXECUTE FUNCTION set_appointment_price();
 
 
 -- =============================================================
@@ -290,78 +340,138 @@ ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointment_history ENABLE ROW LEVEL SECURITY;
 
 -- Policies: lectura pública para datos del sitio web
+DROP POLICY IF EXISTS "Profesionales visibles públicamente" ON professionals;
 CREATE POLICY "Profesionales visibles públicamente"
   ON professionals FOR SELECT
   USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "Servicios visibles públicamente" ON services;
 CREATE POLICY "Servicios visibles públicamente"
   ON services FOR SELECT
   USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "Precios visibles públicamente" ON service_professional_prices;
 CREATE POLICY "Precios visibles públicamente"
   ON service_professional_prices FOR SELECT
   USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "Horarios visibles públicamente" ON weekly_schedule;
 CREATE POLICY "Horarios visibles públicamente"
   ON weekly_schedule FOR SELECT
   USING (is_active = TRUE);
 
+DROP POLICY IF EXISTS "Días bloqueados visibles públicamente" ON blocked_dates;
 CREATE POLICY "Días bloqueados visibles públicamente"
   ON blocked_dates FOR SELECT
   USING (TRUE);
 
--- Policies: las clientas pueden crear sus propios registros
-CREATE POLICY "Clientas pueden registrarse"
-  ON clients FOR INSERT
-  WITH CHECK (TRUE);
+-- Policies: las clientas pueden ver y editar sus propios registros
+DROP POLICY IF EXISTS "Clientas pueden ver su propio registro" ON clients;
+CREATE POLICY "Clientas pueden ver su propio registro"
+  ON clients FOR SELECT
+  USING (auth.uid() = auth_user_id);
 
--- Policies: los turnos pueden crearse públicamente (reserva online)
-CREATE POLICY "Crear turnos públicamente"
+DROP POLICY IF EXISTS "Clientas pueden registrarse y editarse" ON clients;
+CREATE POLICY "Clientas pueden registrarse y editarse"
+  ON clients FOR ALL
+  USING (auth.uid() = auth_user_id)
+  WITH CHECK (auth.uid() = auth_user_id);
+
+-- Policies: seguridad en los turnos
+DROP POLICY IF EXISTS "Clientas pueden crear sus propios turnos" ON appointments;
+CREATE POLICY "Clientas pueden crear sus propios turnos"
   ON appointments FOR INSERT
-  WITH CHECK (TRUE);
+  WITH CHECK (client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "Clientas pueden ver sus turnos" ON appointments;
+CREATE POLICY "Clientas pueden ver sus turnos"
+  ON appointments FOR SELECT
+  USING (client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "Clientas pueden actualizar sus turnos (solo cancelar)" ON appointments;
+CREATE POLICY "Clientas pueden actualizar sus turnos (solo cancelar)"
+  ON appointments FOR UPDATE
+  USING (client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()))
+  WITH CHECK (
+    client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()) 
+    AND status = 'cancelled' -- Solo pueden cancelar
+  );
+
+-- Policies: seguridad en reviews
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Clientas pueden crear reviews" ON reviews;
+CREATE POLICY "Clientas pueden crear reviews"
+  ON reviews FOR INSERT
+  WITH CHECK (client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "Clientas pueden ver sus reviews" ON reviews;
+CREATE POLICY "Clientas pueden ver sus reviews"
+  ON reviews FOR SELECT
+  USING (client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()));
+  
+DROP POLICY IF EXISTS "Reviews publicadas son visibles para todos" ON reviews;
+CREATE POLICY "Reviews publicadas son visibles para todos"
+  ON reviews FOR SELECT
+  USING (is_published = TRUE);
+
+DROP POLICY IF EXISTS "Admin acceso total reviews" ON reviews;
+CREATE POLICY "Admin acceso total reviews"
+  ON reviews FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
 
 -- Policies: admin acceso total (autenticados con rol service_role)
 -- Nota: Estas policies son para el dashboard admin usando supabase-js con service_role key
+DROP POLICY IF EXISTS "Admin acceso total profesionales" ON professionals;
 CREATE POLICY "Admin acceso total profesionales"
   ON professionals FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total servicios" ON services;
 CREATE POLICY "Admin acceso total servicios"
   ON services FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total precios" ON service_professional_prices;
 CREATE POLICY "Admin acceso total precios"
   ON service_professional_prices FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total horarios" ON weekly_schedule;
 CREATE POLICY "Admin acceso total horarios"
   ON weekly_schedule FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total bloqueados" ON blocked_dates;
 CREATE POLICY "Admin acceso total bloqueados"
   ON blocked_dates FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total clientas" ON clients;
 CREATE POLICY "Admin acceso total clientas"
   ON clients FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total turnos" ON appointments;
 CREATE POLICY "Admin acceso total turnos"
   ON appointments FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total settings" ON settings;
 CREATE POLICY "Admin acceso total settings"
   ON settings FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Admin acceso total historial" ON appointment_history;
 CREATE POLICY "Admin acceso total historial"
   ON appointment_history FOR ALL
   USING (auth.role() = 'service_role')
@@ -431,6 +541,7 @@ ON CONFLICT (key) DO NOTHING;
 -- =============================================================
 -- VISTA: turnos del día con info completa
 -- =============================================================
+DROP VIEW IF EXISTS v_daily_appointments CASCADE;
 CREATE OR REPLACE VIEW v_daily_appointments AS
 SELECT 
   a.id,
@@ -462,6 +573,7 @@ ORDER BY a.appointment_date, a.start_time;
 -- =============================================================
 -- VISTA: disponibilidad por profesional
 -- =============================================================
+DROP VIEW IF EXISTS v_professional_availability CASCADE;
 CREATE OR REPLACE VIEW v_professional_availability AS
 SELECT
   p.id AS professional_id,
@@ -476,3 +588,21 @@ FROM professionals p
 JOIN weekly_schedule ws ON ws.professional_id = p.id
 WHERE p.is_active = TRUE
 ORDER BY p.sort_order, ws.day_of_week;
+
+
+-- =============================================================
+-- VISTA: resumen de fidelización de la clienta
+-- =============================================================
+DROP VIEW IF EXISTS v_client_loyalty_summary CASCADE;
+CREATE OR REPLACE VIEW v_client_loyalty_summary AS
+SELECT 
+  id AS client_id,
+  full_name,
+  total_visits,
+  (total_visits * 10) AS points_balance, -- Sistema de puntos: 10 puntos por visita completada
+  100 AS reward_threshold,
+  '$5.000 de descuento en tu próximo servicio' AS reward_label,
+  (100 - ((total_visits * 10) % 100)) AS points_to_next_reward,
+  (((total_visits * 10) % 100) * 100 / 100) AS progress_pct,
+  FLOOR((total_visits * 10) / 100) AS rewards_available
+FROM clients;

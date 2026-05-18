@@ -11,7 +11,7 @@ if ("serviceWorker" in navigator) {
 
   const SUPABASE_URL = "https://mxoztaxlcciqrdejfpum.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14b3p0YXhsY2NpcXJkZWpmcHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTQ3NzksImV4cCI6MjA5NDE5MDc3OX0.bwE9e5P2UvqAC9VauZVk1q6j19mnDkAptXMOTEiKhJA";
-  const LOADER_SESSION_KEY = "vasca-home-loader-seen";
+
   const FALLBACK_TESTIMONIALS = [
     { rating: 5, comment: "El resultado fue justo lo que buscaba. Natural y prolijo.", author_label: "Sofía M." },
     { rating: 5, comment: "El ambiente es súper tranquilo, te sentís cómoda desde que entrás.", author_label: "Lucía R." },
@@ -30,44 +30,7 @@ if ("serviceWorker" in navigator) {
     return p;
   }
 
-  function initPremiumLoader() {
-    const loader = document.getElementById("page-loader");
-    if (!loader) return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const seenBefore = sessionStorage.getItem(LOADER_SESSION_KEY) === "1";
-    let hidden = false;
-
-    if (seenBefore) {
-      loader.remove();
-      return;
-    }
-
-    if (!reducedMotion) {
-      requestAnimationFrame(() => loader.classList.add("is-animating"));
-    }
-
-    const hideLoader = () => {
-      if (hidden) return;
-      hidden = true;
-      sessionStorage.setItem(LOADER_SESSION_KEY, "1");
-      loader.classList.add("is-hidden");
-      window.setTimeout(() => loader.remove(), reducedMotion ? 20 : 700);
-    };
-
-    // Wait for everything: fonts, images, and a minimum display time
-    const minTime = new Promise(r => setTimeout(r, 1800));
-    const pageLoad = new Promise(r => {
-      if (document.readyState === "complete") r();
-      else window.addEventListener("load", r, { once: true });
-    });
-    const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
-
-    Promise.all([minTime, pageLoad, fontsReady]).then(hideLoader);
-
-    // Safety fallback
-    window.setTimeout(hideLoader, 6000);
-  }
 
   function initScrollReveal() {
     const revealEls = document.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale");
@@ -348,7 +311,6 @@ if ("serviceWorker" in navigator) {
     }
   }
 
-  initPremiumLoader();
 
   document.addEventListener("DOMContentLoaded", () => {
     initScrollReveal();
