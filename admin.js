@@ -255,8 +255,6 @@
   }
 
   async function loadCharts() {
-    if (!window.Chart) return;
-
     try {
       const [daily, load, status, kpisMonthly, services, clientStats] = await Promise.all([
         api("v_admin_daily_ops", "select=*"),
@@ -278,6 +276,8 @@
       if (stats) {
         document.getElementById("stat-retention").textContent = `${Number(stats.retention_rate).toFixed(1)}%`;
       }
+
+      if (!window.Chart) return;
 
       upsertChart("daily", "chart-daily", {
         type: "line",
@@ -386,7 +386,8 @@
           ],
         },
       });
-    } catch {
+    } catch (error) {
+      console.error("Error cargando gráficos:", error.message || error);
       ["daily", "load", "revenue", "services", "clients", "status"].forEach((key) => {
         if (charts[key]) {
           charts[key].destroy();
