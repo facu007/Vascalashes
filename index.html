@@ -64,18 +64,18 @@
     <section class="brand-watermark">
       <div class="watermark-container">
         <div class="watermark-track">
-          <span class="watermark-text">VASCA</span>
-          <span class="watermark-text">LASHES</span>
-          <span class="watermark-text">VASCA</span>
-          <span class="watermark-text">LASHES</span>
-          <span class="watermark-text">VASCA</span>
-          <span class="watermark-text">LASHES</span>
-          <span class="watermark-text">VASCA</span>
-          <span class="watermark-text">LASHES</span>
-          <span class="watermark-text">VASCA</span>
-          <span class="watermark-text">LASHES</span>
-          <span class="watermark-text">VASCA</span>
-          <span class="watermark-text">LASHES</span>
+          <div class="watermark-group">
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+          </div>
+          <div class="watermark-group" aria-hidden="true">
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+            <span class="watermark-text">VASCA</span><span class="watermark-text">LASHES</span>
+          </div>
         </div>
       </div>
     </section>
@@ -136,13 +136,13 @@
         <div class="nosotros-grid reveal">
           <div class="nosotros-carousel" id="nosotros-carousel">
             <div class="carousel-slide active">
-              <img src="img/fotovasca1.jpg" alt="Vasca equipo" loading="lazy">
+              <img src="img/fotovasca1.jpg" alt="Vasca equipo" fetchpriority="high">
             </div>
             <div class="carousel-slide">
-              <video src="img/videovasca1.mp4" muted loop playsinline preload="none"></video>
+              <video src="img/videovasca1.mp4" muted loop playsinline preload="auto"></video>
             </div>
             <div class="carousel-slide">
-              <video src="img/videoavasca2.mp4" muted loop playsinline preload="none"></video>
+              <video src="img/videoavasca2.mp4" muted loop playsinline preload="auto"></video>
             </div>
             <div class="carousel-dots" id="carousel-dots">
               <span class="dot active"></span>
@@ -197,10 +197,10 @@
         </div>
 
         <div class="community-videos">
-          <div class="video-card"><video src="img/video.mp4" muted loop playsinline preload="none" loading="lazy"></video><div class="video-overlay"></div></div>
-          <div class="video-card"><video src="img/video2.mp4" muted loop playsinline preload="none" loading="lazy"></video><div class="video-overlay"></div></div>
-          <div class="video-card"><video src="img/video3.mp4" muted loop playsinline preload="none" loading="lazy"></video><div class="video-overlay"></div></div>
-          <div class="video-card"><video src="img/video4.mp4" muted loop playsinline preload="none" loading="lazy"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video2.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video3.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
+          <div class="video-card"><video src="img/video4.mp4" muted loop playsinline preload="metadata"></video><div class="video-overlay"></div></div>
         </div>
       </div>
     </section>

@@ -61,7 +61,7 @@ if ("serviceWorker" in navigator) {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               const idx = Array.from(items).indexOf(entry.target);
-              entry.target.style.transitionDelay = `${idx * 0.1}s`;
+              entry.target.style.animationDelay = `${idx * 0.1}s`;
               entry.target.classList.add("visible");
               observer.unobserve(entry.target);
             }
@@ -350,7 +350,7 @@ if ("serviceWorker" in navigator) {
       setTimeout(() => {
         slides[prev].classList.remove("fade-out");
         if (prevVideo) prevVideo.currentTime = 0;
-      }, 1200);
+      }, 1000);
 
       // Activate new slide
       slides[current].classList.add("active");
