@@ -405,6 +405,7 @@
     charts[key] = new Chart(canvas, {
       ...config,
       options: {
+        ...(config.options || {}),
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
