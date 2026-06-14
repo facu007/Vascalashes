@@ -32,6 +32,8 @@
   let loyaltyMap = new Map();
   let editingAppt = null;
   const charts = {};
+  let currentWeeklySchedule = [];
+  let uploadedBgImage = null;
 
   async function api(table, query = "", opts = {}) {
     const url = `${SUPABASE_URL}/rest/v1/${table}${query ? "?" + query : ""}`;
@@ -142,6 +144,7 @@
         if (view === "calendar") renderCalendar();
         if (view === "clients") loadClients();
         if (view === "reviews") loadReviewsModeration();
+        if (view === "settings") loadSettingsView();
       });
     });
   }
@@ -554,10 +557,9 @@
     }
 
     const duration = parseInt(serviceSelect.selectedOptions[0].dataset.duration, 10) || 60;
-    const dayOfWeek = (new Date(`${dateValue}T12:00:00`).getDay() + 6) % 7;
-
+    const dbDayOfWeek = new Date(`${dateValue}T12:00:00`).getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
     const [schedule, existing, blocked] = await Promise.all([
-      api("weekly_schedule", `select=*&professional_id=eq.${professionalId}&day_of_week=eq.${dayOfWeek + 1}&is_active=eq.true`),
+      api("weekly_schedule", `select=*&professional_id=eq.${professionalId}&day_of_week=eq.${dbDayOfWeek}&is_active=eq.true`),
       api("appointments", `select=start_time,end_time&professional_id=eq.${professionalId}&appointment_date=eq.${dateValue}&status=neq.cancelled`),
       api("blocked_dates", `select=id&blocked_date=eq.${dateValue}&or=(professional_id.eq.${professionalId},professional_id.is.null)`),
     ]);
@@ -922,6 +924,522 @@
     });
   }
 
+  // --- SECCIÓN AJUSTES & HORARIOS ---
+  async function loadSettingsView() {
+    const profSelect = document.getElementById("settings-professional");
+    if (!profSelect) return;
+    const professionalId = profSelect.value;
+    if (!professionalId) return;
+
+    const tbody = document.getElementById("schedule-tbody");
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-msg">Cargando horarios...</td></tr>`;
+
+    try {
+      const schedule = await api("weekly_schedule", `select=*&professional_id=eq.${professionalId}`);
+      currentWeeklySchedule = schedule;
+
+      const daysOfWeek = [
+        { num: 1, name: "Lunes" },
+        { num: 2, name: "Martes" },
+        { num: 3, name: "Miércoles" },
+        { num: 4, name: "Jueves" },
+        { num: 5, name: "Viernes" },
+        { num: 6, name: "Sábado" },
+        { num: 0, name: "Domingo" }
+      ];
+
+      tbody.innerHTML = daysOfWeek.map(day => {
+        const row = schedule.find(r => r.day_of_week === day.num);
+        const active = row ? row.is_active : false;
+        const startTime = row ? formatTime(row.start_time) : "09:00";
+        const endTime = row ? formatTime(row.end_time) : "18:00";
+        const breakStart = (row && row.break_start) ? formatTime(row.break_start) : "13:00";
+        const breakEnd = (row && row.break_end) ? formatTime(row.break_end) : "14:00";
+
+        return `
+          <tr data-day="${day.num}">
+            <td style="font-weight:600;">${day.name}</td>
+            <td>
+              <label class="switch-container">
+                <input type="checkbox" class="schedule-check" ${active ? "checked" : ""} onchange="vasca.toggleRowActive(this)">
+                <span class="switch-slider"></span>
+              </label>
+            </td>
+            <td><input type="time" class="schedule-start" value="${startTime}" ${!active ? "disabled" : ""}></td>
+            <td><input type="time" class="schedule-end" value="${endTime}" ${!active ? "disabled" : ""}></td>
+            <td><input type="time" class="schedule-break-start" value="${breakStart}" ${!active ? "disabled" : ""}></td>
+            <td><input type="time" class="schedule-break-end" value="${breakEnd}" ${!active ? "disabled" : ""}></td>
+          </tr>
+        `;
+      }).join("");
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-msg" style="color:var(--red);">Error: ${error.message}</td></tr>`;
+    }
+
+    generateInstagramStory();
+  }
+
+  function toggleRowActive(checkbox) {
+    const row = checkbox.closest("tr");
+    const inputs = row.querySelectorAll("input[type='time']");
+    inputs.forEach(input => {
+      input.disabled = !checkbox.checked;
+    });
+  }
+
+  async function saveSchedules(event) {
+    event.preventDefault();
+    const profSelect = document.getElementById("settings-professional");
+    const professionalId = profSelect.value;
+    const status = document.getElementById("schedule-status");
+    const button = document.querySelector("#schedule-form button[type='submit']");
+
+    if (!professionalId) return;
+
+    button.disabled = true;
+    status.textContent = "Guardando...";
+    status.className = "form-status";
+
+    try {
+      const rows = document.querySelectorAll("#schedule-tbody tr");
+      const promises = [];
+
+      for (const row of rows) {
+        const dayOfWeek = parseInt(row.dataset.day, 10);
+        const isActive = row.querySelector(".schedule-check").checked;
+        const startTime = row.querySelector(".schedule-start").value;
+        const endTime = row.querySelector(".schedule-end").value;
+        const breakStart = row.querySelector(".schedule-break-start").value || null;
+        const breakEnd = row.querySelector(".schedule-break-end").value || null;
+
+        const existing = currentWeeklySchedule.find(r => r.day_of_week === dayOfWeek);
+
+        if (existing) {
+          promises.push(
+            api("weekly_schedule", `id=eq.${existing.id}`, {
+              method: "PATCH",
+              body: JSON.stringify({
+                is_active: isActive,
+                start_time: startTime + ":00",
+                end_time: endTime + ":00",
+                break_start: breakStart ? breakStart + ":00" : null,
+                break_end: breakEnd ? breakEnd + ":00" : null
+              })
+            })
+          );
+        } else {
+          promises.push(
+            api("weekly_schedule", "", {
+              method: "POST",
+              body: JSON.stringify({
+                professional_id: professionalId,
+                day_of_week: dayOfWeek,
+                is_active: isActive,
+                start_time: startTime + ":00",
+                end_time: endTime + ":00",
+                break_start: breakStart ? breakStart + ":00" : null,
+                break_end: breakEnd ? breakEnd + ":00" : null
+              })
+            })
+          );
+        }
+      }
+
+      await Promise.all(promises);
+      status.textContent = "¡Horarios guardados exitosamente!";
+      status.className = "form-status success";
+      loadSettingsView();
+    } catch (error) {
+      status.textContent = `✕ Error al guardar: ${error.message}`;
+      status.className = "form-status error";
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  // --- SECCIÓN INSTAGRAM STORIES GENERATOR ---
+  async function getDaySlotsData(dateValue, professionalId) {
+    if (!dateValue || !professionalId) return { slots: [], booked: [], isBlocked: false, noSchedule: false };
+
+    const dayOfWeek = new Date(`${dateValue}T12:00:00`).getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+    const [schedule, existing, blocked] = await Promise.all([
+      api("weekly_schedule", `select=*&professional_id=eq.${professionalId}&day_of_week=eq.${dayOfWeek}&is_active=eq.true`),
+      api("appointments", `select=start_time,end_time&professional_id=eq.${professionalId}&appointment_date=eq.${dateValue}&status=neq.cancelled`),
+      api("blocked_dates", `select=id&blocked_date=eq.${dateValue}&or=(professional_id.eq.${professionalId},professional_id.is.null)`),
+    ]);
+
+    if (blocked.length) {
+      return { slots: [], booked: [], isBlocked: true, noSchedule: false };
+    }
+
+    if (!schedule.length) {
+      return { slots: [], booked: [], isBlocked: false, noSchedule: true };
+    }
+
+    const sched = schedule[0];
+    const duration = 60; // 60 minutes for general interval slot
+    const slots = [];
+    let current = timeToMinutes(sched.start_time);
+    const end = timeToMinutes(sched.end_time);
+    const breakStart = sched.break_start ? timeToMinutes(sched.break_start) : null;
+    const breakEnd = sched.break_end ? timeToMinutes(sched.break_end) : null;
+
+    while (current + duration <= end) {
+      const slotStart = current;
+      const slotEnd = current + duration;
+
+      if (breakStart !== null && breakEnd !== null && slotStart < breakEnd && slotEnd > breakStart) {
+        current = breakEnd;
+        continue;
+      }
+
+      const timeStr = minutesToTime(slotStart);
+      const isBooked = existing.some(appt => {
+        const apptStart = timeToMinutes(appt.start_time);
+        const apptEnd = timeToMinutes(appt.end_time);
+        return slotStart < apptEnd && slotEnd > apptStart;
+      });
+
+      slots.push({
+        time: timeStr,
+        isBooked
+      });
+
+      current += duration;
+    }
+
+    return { slots, isBlocked: false, noSchedule: false };
+  }
+
+  async function generateInstagramStory() {
+    const canvas = document.getElementById("instagram-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const dateVal = document.getElementById("insta-date").value;
+    const professionalId = document.getElementById("insta-professional").value;
+    const bgBlur = parseInt(document.getElementById("insta-bg-blur").value, 10);
+    const bgDarken = parseInt(document.getElementById("insta-bg-darken").value, 10);
+    const bgPreset = document.getElementById("insta-bg-preset").value;
+
+    const professional = professionals.find(p => p.id === professionalId);
+    const profName = professional ? professional.name : "";
+
+    ctx.clearRect(0, 0, 1080, 1920);
+
+    // 1. Draw Background
+    if (uploadedBgImage) {
+      drawBackgroundWithImage(ctx, uploadedBgImage, bgBlur, bgDarken);
+    } else {
+      drawBackgroundPreset(ctx, bgPreset, bgBlur, bgDarken);
+    }
+
+    // 2. Draw Central Card (Glassmorphic)
+    const cardX = 100;
+    const cardY = 200;
+    const cardW = 880;
+    const cardH = 1520;
+    const radius = 40;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(26, 24, 22, 0.85)";
+    ctx.strokeStyle = "rgba(255, 245, 235, 0.12)";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.moveTo(cardX + radius, cardY);
+    ctx.lineTo(cardX + cardW - radius, cardY);
+    ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + radius);
+    ctx.lineTo(cardX + cardW, cardY + cardH - radius);
+    ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - radius, cardY + cardH);
+    ctx.lineTo(cardX + radius, cardY + cardH);
+    ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - radius);
+    ctx.lineTo(cardX, cardY + radius);
+    ctx.quadraticCurveTo(cardX, cardY, cardX + radius, cardY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Draw Header Texts
+    ctx.fillStyle = "#c9a88e";
+    ctx.font = "bold 80px 'Cormorant Garamond', Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.fillText("VASCA", 540, 340);
+
+    ctx.fillStyle = "#8a7a6c";
+    ctx.font = "bold 24px 'Manrope', Arial, sans-serif";
+    ctx.letterSpacing = "6px";
+    ctx.fillText("LASHES & EYEBROWS", 540, 390);
+    ctx.letterSpacing = "0px";
+
+    ctx.strokeStyle = "rgba(255, 245, 235, 0.08)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(250, 440);
+    ctx.lineTo(830, 440);
+    ctx.stroke();
+
+    ctx.fillStyle = "#c4b5a5";
+    ctx.font = "bold 32px 'Manrope', Arial, sans-serif";
+    ctx.fillText("TURNOS DISPONIBLES", 540, 500);
+
+    let dateText = "";
+    if (dateVal) {
+      dateText = new Date(`${dateVal}T12:00:00`).toLocaleDateString("es-AR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+      });
+      dateText = dateText.charAt(0).toUpperCase() + dateText.slice(1);
+    } else {
+      dateText = "Elegí una fecha";
+    }
+    ctx.fillStyle = "#f5efe8";
+    ctx.font = "italic 44px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillText(dateText, 540, 560);
+
+    if (profName) {
+      ctx.fillStyle = "#8a7a6c";
+      ctx.font = "500 28px 'Manrope', Arial, sans-serif";
+      ctx.fillText(`Con ${profName}`, 540, 610);
+    }
+
+    // 4. Draw Slots
+    try {
+      const { slots, isBlocked, noSchedule } = await getDaySlotsData(dateVal, professionalId);
+
+      if (isBlocked) {
+        ctx.fillStyle = "#ff6b6b";
+        ctx.font = "italic 36px 'Cormorant Garamond', Georgia, serif";
+        ctx.fillText("Día bloqueado o no disponible", 540, 900);
+        return;
+      }
+
+      if (noSchedule) {
+        ctx.fillStyle = "#8a7a6c";
+        ctx.font = "italic 36px 'Cormorant Garamond', Georgia, serif";
+        ctx.fillText("Sin horarios de trabajo asignados", 540, 900);
+        return;
+      }
+
+      if (!slots || !slots.length) {
+        ctx.fillStyle = "#8a7a6c";
+        ctx.font = "italic 36px 'Cormorant Garamond', Georgia, serif";
+        ctx.fillText("No hay horarios configurados para este día", 540, 900);
+        return;
+      }
+
+      const startY = 680;
+      const slotH = 100;
+      const slotW = 320;
+      const col1X = 180;
+      const col2X = 580;
+      const gapY = 30;
+
+      slots.forEach((slot, index) => {
+        const isCol2 = index % 2 === 1;
+        const rowIndex = Math.floor(index / 2);
+        const x = isCol2 ? col2X : col1X;
+        const y = startY + rowIndex * (slotH + gapY);
+
+        if (y + slotH > cardY + cardH - 100) return;
+
+        drawSlotPill(ctx, x, y, slotW, slotH, slot.time, slot.isBooked);
+      });
+
+      ctx.fillStyle = "rgba(245, 239, 232, 0.4)";
+      ctx.font = "italic 24px 'Cormorant Garamond', Georgia, serif";
+      ctx.fillText("Reservá tu turno en vascalashes.com", 540, 1660);
+
+    } catch (err) {
+      console.error(err);
+      ctx.fillStyle = "#ff6b6b";
+      ctx.font = "28px Arial";
+      ctx.fillText("Error al cargar turnos del día", 540, 900);
+    }
+  }
+
+  function drawBackgroundPreset(ctx, preset, blur, darken) {
+    let gradient = ctx.createLinearGradient(0, 0, 0, 1920);
+    if (preset === "luxury-dark") {
+      gradient.addColorStop(0, "#0f0e0d");
+      gradient.addColorStop(1, "#1c1a18");
+    } else if (preset === "warm-nude") {
+      gradient.addColorStop(0, "#e3d5ca");
+      gradient.addColorStop(1, "#d5bdaf");
+    } else if (preset === "rose-gold") {
+      gradient.addColorStop(0, "#ebd3d4");
+      gradient.addColorStop(1, "#c9a88e");
+    } else if (preset === "soft-brown") {
+      gradient.addColorStop(0, "#8f7769");
+      gradient.addColorStop(1, "#3c332e");
+    }
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    if (darken > 0) {
+      ctx.fillStyle = `rgba(0, 0, 0, ${darken / 100})`;
+      ctx.fillRect(0, 0, 1080, 1920);
+    }
+  }
+
+  function drawBackgroundWithImage(ctx, img, blur, darken) {
+    ctx.save();
+    if (blur > 0) {
+      ctx.filter = `blur(${blur}px) brightness(${1 - darken / 100})`;
+    } else {
+      ctx.filter = `brightness(${1 - darken / 100})`;
+    }
+
+    const scale = Math.max(1080 / img.width, 1920 / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    const x = (1080 - w) / 2;
+    const y = (1920 - h) / 2;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
+  }
+
+  function drawSlotPill(ctx, x, y, w, h, time, isBooked) {
+    const radius = 24;
+    ctx.save();
+
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + h/2);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h/2);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    if (isBooked) {
+      ctx.fillStyle = "rgba(15, 14, 13, 0.4)";
+      ctx.strokeStyle = "rgba(255, 245, 235, 0.04)";
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(245, 239, 232, 0.25)";
+      ctx.font = "bold 38px 'Manrope', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(time + " hs", x + w/2, y + h/2);
+
+      ctx.strokeStyle = "rgba(255, 107, 107, 0.6)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x + 40, y + h/2);
+      ctx.lineTo(x + w - 40, y + h/2);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(201, 168, 142, 0.15)";
+      ctx.strokeStyle = "#c9a88e";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f5efe8";
+      ctx.font = "bold 38px 'Manrope', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(time + " hs", x + w/2, y + h/2);
+    }
+    ctx.restore();
+  }
+
+  function setupInstagramListeners() {
+    const fileInput = document.getElementById("insta-bg-file");
+    const presetSelect = document.getElementById("insta-bg-preset");
+    const blurSlider = document.getElementById("insta-bg-blur");
+    const darkenSlider = document.getElementById("insta-bg-darken");
+    const dateInput = document.getElementById("insta-date");
+    const profSelect = document.getElementById("insta-professional");
+
+    const redraw = () => generateInstagramStory();
+
+    if (fileInput) {
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          uploadedBgImage = null;
+          redraw();
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            uploadedBgImage = img;
+            redraw();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    [presetSelect, blurSlider, darkenSlider, dateInput, profSelect].forEach(el => {
+      if (el) el.addEventListener("change", redraw);
+    });
+
+    if (blurSlider) blurSlider.addEventListener("input", redraw);
+    if (darkenSlider) darkenSlider.addEventListener("input", redraw);
+
+    const btnDownload = document.getElementById("btn-insta-download");
+    if (btnDownload) {
+      btnDownload.addEventListener("click", () => {
+        const canvas = document.getElementById("instagram-canvas");
+        if (!canvas) return;
+        const dateVal = document.getElementById("insta-date").value || today();
+        const link = document.createElement("a");
+        link.download = `cronograma-vasca-${dateVal}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+
+    const btnCopy = document.getElementById("btn-insta-copy");
+    if (btnCopy) {
+      btnCopy.addEventListener("click", () => {
+        const canvas = document.getElementById("instagram-canvas");
+        if (!canvas) return;
+        canvas.toBlob(async (blob) => {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                [blob.type]: blob
+              })
+            ]);
+            alert("¡Imagen copiada al portapapeles! Ya podés pegarla en Instagram o WhatsApp.");
+          } catch (err) {
+            console.error("Error al copiar imagen:", err);
+            alert("No se pudo copiar automáticamente. Podés descargar la imagen con el botón 'Descargar'.");
+          }
+        });
+      });
+    }
+  }
+
+  function populateSettingsSelects() {
+    const profSelect = document.getElementById("settings-professional");
+    const instaProfSelect = document.getElementById("insta-professional");
+    if (profSelect) {
+      profSelect.innerHTML = professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+    }
+    if (instaProfSelect) {
+      instaProfSelect.innerHTML = professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const instaDateInput = document.getElementById("insta-date");
+    if (instaDateInput) {
+      instaDateInput.value = tomorrow.toISOString().split("T")[0];
+    }
+  }
+
   async function init() {
     setupNav();
     setupMobileMenu();
@@ -936,6 +1454,12 @@
 
     populateFormSelects();
     setupFormListeners();
+    populateSettingsSelects();
+    setupInstagramListeners();
+    
+    document.getElementById("schedule-form").addEventListener("submit", saveSchedules);
+    document.getElementById("settings-professional").addEventListener("change", loadSettingsView);
+    
     loadDashboard();
   }
 
@@ -958,6 +1482,7 @@
     approveReview: (id) => updateReview(id, { is_approved: true }),
     publishReview: (id) => updateReview(id, { is_approved: true, is_published: true }),
     unpublishReview: (id) => updateReview(id, { is_published: false }),
+    toggleRowActive,
   };
 
   document.addEventListener("DOMContentLoaded", init);

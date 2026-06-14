@@ -321,9 +321,9 @@
 
     slotsContainer.innerHTML = "<p class='hint'>Cargando...</p>";
 
-    const dayOfWeek = (new Date(`${dateValue}T12:00:00`).getDay() + 6) % 7;
+    const dbDayOfWeek = new Date(`${dateValue}T12:00:00`).getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
     const [schedule, existing, blocked] = await Promise.all([
-      api("weekly_schedule", `select=*&professional_id=eq.${selected.professional.id}&day_of_week=eq.${dayOfWeek + 1}&is_active=eq.true`),
+      api("weekly_schedule", `select=*&professional_id=eq.${selected.professional.id}&day_of_week=eq.${dbDayOfWeek}&is_active=eq.true`),
       api("appointments", `select=start_time,end_time&professional_id=eq.${selected.professional.id}&appointment_date=eq.${dateValue}&status=neq.cancelled`),
       api("blocked_dates", `select=id&blocked_date=eq.${dateValue}&or=(professional_id.eq.${selected.professional.id},professional_id.is.null)`),
     ]);
